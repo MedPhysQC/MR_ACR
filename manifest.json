@@ -1,0 +1,20 @@
+{
+  "info": {
+    "dbversion": "20180209",
+    "magic": "wad-qc-factory",
+    "wadqcversion": "2.0.33"
+  },
+  "module": {
+    "description": "MR ACR",
+    "executable": "docker_starter.py",
+    "name": "MR_ACR",
+    "code": "python",
+    "dependencies": [
+      "pillow",
+      "numpy",
+      "pydicom",
+      "scipy",
+      "matplotlib"
+    ]
+  }
+}

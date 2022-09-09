@@ -1,0 +1,11 @@
+test/.pytest_cache
+wad_qc
+pipfile.lock
+venv
+result_objects/*.png
+result_objects/*.jpg
+result_objects/*.jpeg
+result_objects/*.pdf
+result_objects/*.svg
+result_objects/*.tiff
+result_objects/*.png

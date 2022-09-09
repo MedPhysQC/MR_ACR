@@ -1,0 +1,83 @@
+{
+  "actions": {
+    "acqdatetime": {
+      "filters": {},
+      "params": {
+        "datetime_level": "Study",
+        "series_description_datetime": "ACR SNR 20CH"
+      }
+    },
+    "resonance_frequency": {
+      "filters": {},
+      "params": {
+        "series_description_resonance_frequency": "ACR TRA T1 DIS2D"
+      }
+    },
+    "signal_noise_ratio": {
+      "filters": {},
+      "params": {
+        "series_description_signal_noise_ratio": "ACR SNR 20CH",
+        "background_roi_shift_mm": 108,
+        "signal_roi_diameter_mm": 150,
+        "noise_roi_sides_mm": 7
+      }
+    },
+    "ghosting": {
+      "filters": {},
+      "params": {
+        "series_description_ghosting": "ACR SNR 8CH",
+        "ghosting_roi_width_mm": 28,
+        "ghosting_roi_height_mm": 7
+      }
+    },
+    "image_uniformity": {
+      "filters": {},
+      "params": {
+        "series_description_image_uniformity": "ACR SNR 8CH"
+      }
+    },
+    "geometry": {
+      "filters": {},
+      "params": {
+        "series_description_geometry_x_y": "ACR TRA T1 DIS2D",
+        "geometry_x_y_image_number": 6,
+        "series_description_geometry_z": "ACR SAG DIS2D"
+      }
+    },
+    "shim": {
+      "filters": {},
+      "params": {
+        "series_description_shim": "ACR B0 MAP",
+        "relative_roi_size_shim": 95,
+        "top_margin_shim": 20
+      }
+    }
+  },
+  "comments": {
+    "author": "Guido Millenaar, NKI-AvL",
+    "description": "Diagnostic module for use with the ACR MR phantom.",
+    "params": {
+      "datetime_level": "REQUIRED. For allowed options see wad_qc.modulelibs.wadwrapper_lib.dcm_datetime.get_datetime.",
+      "series_description_datetime": "REQUIRED. Series description for retreiving datetime",
+
+      "series_description_resonance_frequency": "REQUIRED. The series description that identifies the correct acquisition for determining the resonance frequency.",
+
+      "series_description_signal_noise_ratio": "REQUIRED. The series description that identifies the correct acquisition for determining the signal to noise ratio.",
+      "signal_roi_diameter_mm": "Diameter in millimeters for the centered roi that is used for measuring signal.",
+      "noise_roi_sides_mm": "Side length in millimeters of the square rois that are used for measuring noise.",
+
+      "series_description_ghosting": "REQUIRED. The series description that identifies the correct acquisition for determining ghosting.",
+      "ghosting_roi_width_mm": "Width in millimeters of the roi used for measuring ghosting signal.",
+      "ghosting_roi_height_mm": "Height in millimeters of the roi used for measuring ghosting signal.",
+
+      "series_description_image_uniformity": "REQUIRED. The series description that identifies the correct acquisition for determining image uniformity.",
+
+      "series_description_geometry_x_y": "REQUIRED. The series description that identifies the correct acquisition for determining phantom geometry over x and y axes.",
+      "series_description_geometry_z": "REQUIRED. The series description that identifies the correct acquisition for determining phantom geometry over z axis.",
+
+      "series_description_shim": "REQUIRED. The series description that identifies the correct acquisition for determining shim.",
+      "relative_roi_size_shim": "REQUIRED. Size of the ROI radius used for measuring the B0 values. Percentage of the phantom size.",
+      "top_margin_shim": "REQUIRED. Percentage of the ROI diameter which is vertically removed from the top to account for the air bubble in the phantom."
+    }
+  }
+}
