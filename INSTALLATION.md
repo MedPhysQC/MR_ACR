@@ -1,7 +1,7 @@
 # MR_ACR installation instruction
 
 + Download factory tools:  
-git clone https://bitbucket.org/MedPhysNL/wadqc.git <<TOOLSDIR>>
+`git clone https://bitbucket.org/MedPhysNL/wadqc.git <<TOOLSDIR>>`
 
 + Clone repository to local machine:
 
