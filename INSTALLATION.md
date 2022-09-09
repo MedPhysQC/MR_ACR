@@ -34,22 +34,22 @@
 
 + Reboot server 
 
-+ WINSCP to WAD server. Copy contents of <<REPODIR>> directory to wad server. 
++ WINSCP to WAD server. Copy contents of `<<REPODIR>>` directory to wad server. 
 
-+ SSH to WAD server, cd to directory containing <<REPODIR>>. Build docker container:
++ SSH to WAD server, cd to directory containing `<<REPODIR>>`. Build docker container:
 
   `docker build –t mr_acr .`
  
 ###	Configure module in WAD interface:
   
-*	Select: “Import modules/selectors”,  select “browse” and select created zip file from <<FACTORY_OUTPUT_DIR>>. Then press “Import” 
+*	Select: “Import modules/selectors”,  select “browse” and select created zip file from `<<FACTORY_OUTPUT_DIR>>`. Then press “Import” 
 
 *	Select: “Module configs”, scroll down if required and press: “new“
     * Add a name and description, these can be anything. 
     * For module select: MR_ACR
     * For datatype select: dcm_study
-    * Browse to config file name:  <<REPODIR>>\config\module_config.json
-    * Browse to meta config file name: <<REPODIR>>\config\meta_config.json
+    * Browse to config file name:  `<<REPODIR>>\config\module_config.json`
+    * Browse to meta config file name: `<<REPODIR>>\config\meta_config.json`
     * Finally press: Submit 
 
 *	Select: “Selectors”, scroll down if required and press: “new“
