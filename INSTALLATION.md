@@ -1,12 +1,11 @@
 # MR_ACR installation instruction
 
-+ Download factory tools: 
-
++ Download factory tools:  
 git clone https://bitbucket.org/MedPhysNL/wadqc.git <<TOOLSDIR>>
 
 + Clone repository to local machine:
 
-git clone http://gitlab.nki.nl/m.barsingerhorn/mr_acr.git <<REPODIR>>
+  git clone http://gitlab.nki.nl/m.barsingerhorn/mr_acr.git <<REPODIR>>
 
 + Make factory module zip file:
 
