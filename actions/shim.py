@@ -3,7 +3,12 @@ from typing import List
 
 import numpy as np
 
-from util import acquisition_by_series_description, DicomSeriesList, retrieve_ellipse_parameters, elliptical_mask
+from util import (
+    acquisition_by_series_description,
+    DicomSeriesList,
+    retrieve_ellipse_parameters,
+    elliptical_mask,
+)
 
 
 class ShimDataTypes(Enum):
@@ -26,6 +31,18 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
 
     # retrieve all slices
     acquisition = acquisition_by_series_description(series_description, parsed_input)
+
+    actionName = "shim"
+    print(
+        "action "
+        + actionName
+        + " called for "
+        + "study_instance_uid: '"
+        + acquisition[0]["StudyInstanceUID"].value
+        + "' series_instance_uid: '"
+        + acquisition[0]["SeriesInstanceUID"].value
+        + "'"
+    )
 
     # magnitude index = 0; used for determining center of the phantom
     magnitude = acquisition[0]

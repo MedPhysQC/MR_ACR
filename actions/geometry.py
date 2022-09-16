@@ -31,6 +31,19 @@ def geometry_x_y(
     )  # edge detection wants floats
 
     acquisition = acquisition_by_series_description(series_description, parsed_input)
+
+    actionName = "geometry_x_y"
+    print(
+        "action "
+        + actionName
+        + " called for "
+        + "study_instance_uid: '"
+        + acquisition[0]["StudyInstanceUID"].value
+        + "' series_instance_uid: '"
+        + acquisition[0]["SeriesInstanceUID"].value
+        + "'"
+    )
+
     [
         x_center_px,
         y_center_px,
@@ -95,6 +108,18 @@ def geometry_z(
         series_description_z, parsed_input
     )
 
+    actionName = "geometry_z"
+    print(
+        "action "
+        + actionName
+        + " called for "
+        + "study_instance_uid: '"
+        + acquisition_z[0]["StudyInstanceUID"].value
+        + "' series_instance_uid: '"
+        + acquisition_z[0]["SeriesInstanceUID"].value
+        + "'"
+    )
+
     # Get pixel spacing
     pixel_spacing = get_pixel_spacing(acquisition_z)
 
@@ -105,9 +130,9 @@ def geometry_z(
     image_filtered[image_filtered < image_filtered.max() / 4] = 0
 
     # Canny edge detection
-    edges_z = detect_edges(image_filtered, sigma=1.5, low_threshold=3, high_threshold=100)
-
-    #write_array_to_file("D:\\Temp\\ACR debug\\Canny1.raw", edges_z.flatten())
+    edges_z = detect_edges(
+        image_filtered, sigma=1.5, low_threshold=3, high_threshold=100
+    )
 
     # The most top right pixel with a value is the approximate top right of the phantom
     # Sum columns, resulting a row with sums. Select all greater than zero, and take last
@@ -135,7 +160,8 @@ def geometry_z(
     phantom_bottom_right_column = np.where(selection)[0][-1]
 
     # Create tuple
-    phantom_bottom_right_xy = np.array([phantom_bottom_right_column, phantom_bottom_right_row]
+    phantom_bottom_right_xy = np.array(
+        [phantom_bottom_right_column, phantom_bottom_right_row]
     )
 
     # the specified width of the phantom is 190mm, meaning the square root of 190**2 + side length**2 is the length of the diagonal
@@ -177,7 +203,8 @@ def geometry_z(
     ] = 0
 
     # generate sinogram to find the edges of the phantom
-    sinogram = radon_transform(edges_z_crop)
+    max_deg_for_sinogram = 180.0
+    sinogram = radon_transform(edges_z_crop, max_deg_for_sinogram)
 
     # find the coordinates for the two highest peaks
     # mask the sinogram so we only look at parallel, closest to perpendicular to columns
@@ -193,7 +220,7 @@ def geometry_z(
     # find the column index for the first peak over 90% of the max value
     # this works well as we expect two high peaks in the data that are close to each other in value
     # a peak is where the following value is lower than the current
-    threshold = 0.75
+    threshold = 0.60
     peak_first = [
         (index, value)
         for index, value in enumerate(sino_max_per_row[:-1])
@@ -235,9 +262,14 @@ def geometry_z(
     )
 
     # distance to center of sinogram is distance of line to center image
-    sinogram_center = np.array([sinogram.shape[0] // 2, sinogram.shape[0] // 2])
-    peak_1_center_distance_pixels = np.linalg.norm(sinogram_center - peak_1_coords)
-    peak_2_center_distance_pixels = np.linalg.norm(sinogram_center - peak_2_coords)
+    sinogram_center = np.array([sinogram.shape[0] // 2, sinogram.shape[1] // 2])
+
+    angle = np.cos(np.radians(max_deg_for_sinogram / sinogram.shape[0] * (sinogram_center[0] - peak_1_coords[0])))
+    peak_1_center_distance_pixels = np.absolute((sinogram_center[1] - peak_1_coords[1]) / angle)
+
+    angle = np.cos(np.radians(max_deg_for_sinogram / sinogram.shape[0] * (sinogram_center[0] - peak_2_coords[0])))
+    peak_2_center_distance_pixels = np.absolute((sinogram_center[1] - peak_2_coords[1]) / angle)
+
 
     # length of phantom in mm is both lengths added and corrected for pixel spacing
     z_length_mm = (

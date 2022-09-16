@@ -19,6 +19,19 @@ def resonance_frequency(parsed_input: List[DicomSeriesList], result, action_conf
         acquisition = acquisition_by_series_description(
             series_description, parsed_input
         )
+
+        actionName = "resonance_frequency"
+        print(
+            "action "
+            + actionName
+            + " called for "
+            + "study_instance_uid: '"
+            + acquisition[0]["StudyInstanceUID"].value
+            + "' series_instance_uid: '"
+            + acquisition[0]["SeriesInstanceUID"].value
+            + "'"
+        )
+
         result.addFloat("ResonanceFrequency", getattr(acquisition[0], attribute))
     except AttributeError:
         result.addString(

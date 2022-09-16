@@ -49,6 +49,18 @@ def signal_noise_ratio(parsed_input: List[DicomSeriesList], result, action_confi
     acquisition = acquisition_by_series_description(series_description, parsed_input)
     image_data = image_data_by_series_description(series_description, parsed_input)
 
+    actionName = "signal_noise_ratio"
+    print(
+        "action "
+        + actionName
+        + " called for "
+        + "study_instance_uid: '"
+        + acquisition[0]["StudyInstanceUID"].value
+        + "' series_instance_uid: '"
+        + acquisition[0]["SeriesInstanceUID"].value
+        + "'"
+    )
+
     # determine center coordinates of phantom
     [center_x, center_y, _, _, _] = retrieve_ellipse_parameters(
         image_data, mask_air_bubble=True
@@ -79,7 +91,13 @@ def signal_noise_ratio(parsed_input: List[DicomSeriesList], result, action_confi
 
     # save result objects to directory relative to working directory
     snr_result_image_filename = str(
-        Path(result.getDirName() + os.sep + "result_objects" + os.sep + "snr_rois_result.png").absolute()
+        Path(
+            result.getDirName()
+            + os.sep
+            + "result_objects"
+            + os.sep
+            + "snr_rois_result.png"
+        ).absolute()
     )  # gets instantiated relative to working directory
     snr_result_image_filename_path = os.path.dirname(snr_result_image_filename)
     if not os.path.exists(snr_result_image_filename_path):

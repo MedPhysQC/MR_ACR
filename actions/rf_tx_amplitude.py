@@ -18,6 +18,19 @@ def rf_transmitter_amplitude(
     rf_tag = action_config["params"]["rf_transmitter_amplitude_tag"]
     series_description = action_config["params"]["rf_transmitter_series_description"]
     acquisition = acquisition_by_series_description(series_description, parsed_input)
+
+    actionName = "rf_transmitter_amplitude"
+    print(
+        "action "
+        + actionName
+        + " called for "
+        + "study_instance_uid: '"
+        + acquisition[0]["StudyInstanceUID"].value
+        + "' series_instance_uid: '"
+        + acquisition[0]["SeriesInstanceUID"].value
+        + "'"
+    )
+
     try:
         # check if hex is valid; must be hex as this is stored in a private tag
         rf_tag_parsed = [int(tag, 16) for tag in rf_tag]

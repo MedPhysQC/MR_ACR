@@ -16,4 +16,16 @@ def acqdatetime(parsed_input: List[DicomSeriesList], result, action_config) -> N
     acquisition = acquisition_by_series_description(series_description, parsed_input)
     dt = wad_lib.get_datetime(ds=acquisition[0], datetime_level=level)
 
+    actionName = "acqdatetime"
+    print(
+        "action "
+        + actionName
+        + " called for "
+        + "study_instance_uid: '"
+        + acquisition[0]["StudyInstanceUID"].value
+        + "' series_instance_uid: '"
+        + acquisition[0]["SeriesInstanceUID"].value
+        + "'"
+    )
+
     result.addDateTime("AcquisitionDateTime", dt)

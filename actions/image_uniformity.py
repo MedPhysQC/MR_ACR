@@ -25,6 +25,18 @@ def image_uniformity(
     acquisition = acquisition_by_series_description(series_description, parsed_input)
     image_data = image_data_by_series_description(series_description, parsed_input)
 
+    actionName = "image_uniformity"
+    print(
+        "action "
+        + actionName
+        + " called for "
+        + "study_instance_uid: '"
+        + acquisition[0]["StudyInstanceUID"].value
+        + "' series_instance_uid: '"
+        + acquisition[0]["SeriesInstanceUID"].value
+        + "'"
+    )
+
     [center_x, center_y, _, _, _] = retrieve_ellipse_parameters(
         image_data, mask_air_bubble=True
     )
@@ -76,7 +88,13 @@ def image_uniformity(
     circle_2 = [(min_mean_center[0], min_mean_center[1]), 7.5 / pixel_spacing]
 
     image_uniformity_result_filename = str(
-        Path(result.getDirName() + os.sep + "result_objects" + os.sep + "image_uniformity_result.png").absolute()
+        Path(
+            result.getDirName()
+            + os.sep
+            + "result_objects"
+            + os.sep
+            + "image_uniformity_result.png"
+        ).absolute()
     )  # gets instantiated relative to working directory
     image_uniformity_result_filename_path = os.path.dirname(
         image_uniformity_result_filename

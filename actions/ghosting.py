@@ -31,6 +31,18 @@ def ghosting(parsed_input: List[DicomSeriesList], result, action_config) -> None
     acquisition = acquisition_by_series_description(series_description, parsed_input)
     image_data = image_data_by_series_description(series_description, parsed_input)
 
+    actionName = "ghosting"
+    print(
+        "action "
+        + actionName
+        + " called for "
+        + "study_instance_uid: '"
+        + acquisition[0]["StudyInstanceUID"].value
+        + "' series_instance_uid: '"
+        + acquisition[0]["SeriesInstanceUID"].value
+        + "'"
+    )
+
     # retrieve pixel spacing to get the pixel values from the correct positions, verify square pixels
     pixel_spacing = get_pixel_spacing(acquisition)
 
@@ -85,7 +97,13 @@ def ghosting(parsed_input: List[DicomSeriesList], result, action_config) -> None
         / (2.0 * np.mean(phantom_roi_values))
     )
     image_ghosting_result_filename = str(
-        Path(result.getDirName() + os.sep + "result_objects" + os.sep + "image_ghosting_result.png").absolute()
+        Path(
+            result.getDirName()
+            + os.sep
+            + "result_objects"
+            + os.sep
+            + "image_ghosting_result.png"
+        ).absolute()
     )  # gets instantiated relative to working directory
 
     image_ghosting_result_filename_path = os.path.dirname(
