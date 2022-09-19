@@ -8,7 +8,7 @@
 
 + Clone repository to local machine:
 
-  `git clone http://gitlab.nki.nl/m.barsingerhorn/mr_acr.git <<REPODIR>>`
+  `git clone git clone https://github.com/MedPhysQC/MR_ACR.git <<REPODIR>>`
 
 + Make factory module zip file:  
   
