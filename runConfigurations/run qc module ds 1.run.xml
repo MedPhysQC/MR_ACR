@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="run qc module ds 20210309" type="PythonConfigurationType" factoryName="Python">
-    <module name="mr_acr_pipenv_rebuild40" />
+    <module name="github" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
@@ -8,14 +8,14 @@
       <env name="PYDEVD_USE_CYTHON" value="NO" />
       <env name="PYDEVD_USE_FRAME_EVAL" value="NO" />
     </envs>
-    <option name="SDK_HOME" value="D:\Projects\MR_ACR\repo\mr_acr_pipenv_rebuild40\.venv\Scripts\python.exe" />
+    <option name="SDK_HOME" value="D:\Projects\MR_ACR\repo\github\.venv\Scripts\python.exe" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <option name="IS_MODULE_SDK" value="false" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/mr_acr.py" />
-    <option name="PARAMETERS" value="-r results.json -c config\module_config.json -d &quot;D:\Projects\MR_ACR\DataGuido\Data\mracr\TEST_WADQC_SERVER&quot;" />
+    <option name="PARAMETERS" value="-r results.json -c config\module_config.json -d &quot;D:\Projects\MR_ACR\DataMarloes\Marloes WAD\ACR\MRL\20220118&quot;" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
