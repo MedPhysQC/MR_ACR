@@ -74,6 +74,8 @@ def ghosting(parsed_input: List[DicomSeriesList], result, action_config) -> None
         image_data, center_x, center_y, phantom_roi_mm, pixel_spacing
     )
 
+    # 100*2*ABS(ROI1‐ROI2)/(ROI1+ROI2)
+
     ghosting_rows_percentage = (
         100
         * (

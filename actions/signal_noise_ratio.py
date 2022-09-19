@@ -87,7 +87,9 @@ def signal_noise_ratio(parsed_input: List[DicomSeriesList], result, action_confi
     background_roi_std = np.std(background_rois_values)
 
     # determine SNR
-    signal_to_noise_ratio = 0.655 * (center_roi_mean / background_roi_std)
+    signal_to_noise_ratio = 0.0
+    if background_roi_std > 0.0001:
+        signal_to_noise_ratio = 0.655 * (center_roi_mean / background_roi_std)
 
     # save result objects to directory relative to working directory
     snr_result_image_filename = str(
