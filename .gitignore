@@ -1,5 +1,4 @@
 test/.pytest_cache
-wad_qc
 pipfile.lock
 venv
 result_objects/*.png
