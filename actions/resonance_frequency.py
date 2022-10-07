@@ -42,9 +42,6 @@ def resonance_frequency(parsed_input: List[DicomSeriesList], result, action_conf
         # Compute delta
         delta_resonance_frequency = expected_resonance_frequency - measured_resonance_frequency
 
-        # Convert to Khz
-        delta_resonance_frequency *= 1000
-
         result.addFloat("ResonanceFrequencyDelta", delta_resonance_frequency)
     except AttributeError:
         result.addString(
