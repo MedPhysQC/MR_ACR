@@ -33,7 +33,14 @@ if __name__ == "__main__":
 
     for action, configuration in config['actions'].items():
         if action in available_actions:
-            available_actions[action](parsed_inputs, results, configuration)
+            try:
+                available_actions[action](parsed_inputs, results, configuration)
+            except Exception as e:
+                logger.warning(f"'{action}' failed, skipping...")
+                logger.warning(f"Exception text:" + str(e))
+
+            except:
+                logger.warning(f"'{action}' failed, skipping...")
         else:
             logger.warning(f"'{action}' not available, skipping...")
 

@@ -32,7 +32,20 @@ def resonance_frequency(parsed_input: List[DicomSeriesList], result, action_conf
             + "'"
         )
 
-        result.addFloat("ResonanceFrequency", getattr(acquisition[0], attribute))
+        gyromagnetic_ratio = 42.577478518
+        magnetic_field_strength = getattr(acquisition[0], "MagneticFieldStrength")
+
+        # Frequency in Mhz
+        expected_resonance_frequency = magnetic_field_strength * gyromagnetic_ratio
+        measured_resonance_frequency = getattr(acquisition[0], attribute)
+
+        # Compute delta
+        delta_resonance_frequency = expected_resonance_frequency - measured_resonance_frequency
+
+        # Convert to Khz
+        delta_resonance_frequency *= 1000
+
+        result.addFloat("ResonanceFrequencyDelta", delta_resonance_frequency)
     except AttributeError:
         result.addString(
             "ResonanceFrequency",
