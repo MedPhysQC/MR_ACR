@@ -23,9 +23,9 @@ def geometry_x_y(
     parsed_input: List[DicomSeriesList], action_config, result
 ) -> List[float]:
     series_description = action_config["params"]["geometry_x_y_series_description"]
-    image_number = action_config["params"][
+    image_number = int(action_config["params"][
         "geometry_x_y_image_number"
-    ]  # TODO check image number 0/1 indexed
+    ])  # TODO check image number 0/1 indexed
     image_data = image_data_by_series_description(
         series_description, parsed_input, image_number=image_number, data_type="float"
     )  # edge detection wants floats
@@ -63,6 +63,9 @@ def geometry_x_y(
         ).absolute()
     )  # gets instantiated relative to working directory
     geometry_xy_filename_path = os.path.dirname(geometry_xy_filename)
+
+    print("Write geometry_xy.png to: '" + geometry_xy_filename + "'")
+
     if not os.path.exists(geometry_xy_filename_path):
         os.makedirs(geometry_xy_filename_path)
 
@@ -302,6 +305,9 @@ def geometry_z(
             + "geometry_z_edges.png"
         ).absolute()
     )  # gets instantiated relative to working directory
+
+    print("Write geometry_z_result.png to: '" + z_result_image_filename + "'")
+    print("Write geometry_z_edges.png to: '" + z_edges_image_filename + "'")
 
     z_result_image_filename_path = os.path.dirname(z_result_image_filename)
     if not os.path.exists(z_result_image_filename_path):

@@ -22,11 +22,11 @@ def ghosting(parsed_input: List[DicomSeriesList], result, action_config) -> None
     signal ghosting percentage = 100 * (abs(ghost_signal - noise_signal) / (2* mean_signal))
     """
     series_description = action_config["params"]["ghosting_series_description"]
-    ghosting_roi_short_side_mm = action_config["params"]["ghosting_roi_short_side_mm"]
-    ghosting_roi_long_side_mm = action_config["params"]["ghosting_roi_long_side_mm"]
-    noise_roi_sides_mm = action_config["params"]["ghosting_noise_roi_sides_mm"]
-    phantom_roi_mm = action_config["params"]["ghosting_phantom_roi_radius_mm"]
-    roi_shift_mm = action_config["params"]["ghosting_background_roi_shift_mm"]
+    ghosting_roi_short_side_mm = float(action_config["params"]["ghosting_roi_short_side_mm"])
+    ghosting_roi_long_side_mm = float(action_config["params"]["ghosting_roi_long_side_mm"])
+    noise_roi_sides_mm = float(action_config["params"]["ghosting_noise_roi_sides_mm"])
+    phantom_roi_mm = float(action_config["params"]["ghosting_phantom_roi_radius_mm"])
+    roi_shift_mm = float(action_config["params"]["ghosting_background_roi_shift_mm"])
 
     acquisition = acquisition_by_series_description(series_description, parsed_input)
     image_data = image_data_by_series_description(series_description, parsed_input)
@@ -113,6 +113,8 @@ def ghosting(parsed_input: List[DicomSeriesList], result, action_config) -> None
     )
     if not os.path.exists(image_ghosting_result_filename_path):
         os.makedirs(image_ghosting_result_filename_path)
+
+    print("Write image_ghosting_result.png to: " + image_ghosting_result_filename + "'")
 
     plot_rectangles_and_circles_on_image(
         image_data,

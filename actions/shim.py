@@ -26,8 +26,8 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
     leaving out the upper 20% as well to account for the air bubble in the top of the phantom
     """
     series_description = action_config["params"]["shim_series_description"]
-    roi_radius_pct = action_config["params"]["shim_relative_roi_size"]
-    top_margin = action_config["params"]["shim_top_margin"]
+    roi_radius_pct = float(action_config["params"]["shim_relative_roi_size"])
+    top_margin = int(action_config["params"]["shim_top_margin"])
 
     # retrieve all slices
     acquisition = acquisition_by_series_description(series_description, parsed_input)

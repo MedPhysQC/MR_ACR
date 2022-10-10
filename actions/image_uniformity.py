@@ -43,10 +43,10 @@ def image_uniformity(
 
     pixel_spacing = get_pixel_spacing(acquisition)
 
-    phantom_roi_size = action_config["params"]["image_uniformity_phantom_roi_size_mm"]
-    uniformity_roi_size = action_config["params"][
+    phantom_roi_size = float(action_config["params"]["image_uniformity_phantom_roi_size_mm"])
+    uniformity_roi_size = float(action_config["params"][
         "image_uniformity_uniformity_roi_size_mm"
-    ]
+    ])
     # subtract the radius for the smaller roi to stay inside the phantom roi
     pixel_radius_uniformity = uniformity_roi_size * pixel_spacing / 2
     pixel_radius_phantom = (
@@ -99,6 +99,8 @@ def image_uniformity(
     image_uniformity_result_filename_path = os.path.dirname(
         image_uniformity_result_filename
     )
+    print("Write image_uniformity_result.png to: '" + image_uniformity_result_filename_path + "'")
+
     if not os.path.exists(image_uniformity_result_filename_path):
         os.makedirs(image_uniformity_result_filename_path)
     plot_rectangles_and_circles_on_image(

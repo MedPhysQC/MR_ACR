@@ -31,19 +31,19 @@ def signal_noise_ratio(parsed_input: List[DicomSeriesList], result, action_confi
     default_noise_roi_sides_mm = 7
     default_background_roi_shift_mm = 108
 
-    signal_roi_diameter_mm = param_or_default(
+    signal_roi_diameter_mm = float(param_or_default(
         action_config["params"],
         "snr_signal_roi_diameter_mm",
         default_signal_roi_diameter_mm,
-    )
-    noise_roi_sides_mm = param_or_default(
+    ))
+    noise_roi_sides_mm = float(param_or_default(
         action_config["params"], "snr_noise_roi_sides_mm", default_noise_roi_sides_mm
-    )
-    background_roi_shift_mm = param_or_default(
+    ))
+    background_roi_shift_mm = float(param_or_default(
         action_config["params"],
         "snr_background_roi_shift_mm",
         default_background_roi_shift_mm,
-    )
+    ))
 
     series_description = action_config["params"]["snr_series_description"]
     acquisition = acquisition_by_series_description(series_description, parsed_input)
@@ -102,6 +102,9 @@ def signal_noise_ratio(parsed_input: List[DicomSeriesList], result, action_confi
         ).absolute()
     )  # gets instantiated relative to working directory
     snr_result_image_filename_path = os.path.dirname(snr_result_image_filename)
+
+    print("Write snr_rois_result.png to: '" + snr_result_image_filename_path + "'")
+
     if not os.path.exists(snr_result_image_filename_path):
         os.makedirs(snr_result_image_filename_path)
 
