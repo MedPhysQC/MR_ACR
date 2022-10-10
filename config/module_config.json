@@ -19,7 +19,7 @@
         "snr_series_description": "ACR SNR 8CH",
         "snr_background_roi_shift_mm": 112,
         "snr_signal_roi_diameter_mm": 150,
-        "snr_noise_roi_sides_mm": 7
+        "snr_noise_roi_sides_mm": 10
       }
     },
     "ghosting": {
@@ -28,7 +28,7 @@
         "ghosting_series_description": "ACR SNR 8CH",
         "ghosting_roi_long_side_mm": 28,
         "ghosting_roi_short_side_mm": 7,
-        "ghosting_noise_roi_sides_mm": 7,
+        "ghosting_noise_roi_sides_mm": 10,
         "ghosting_phantom_roi_radius_mm": 150,
         "ghosting_background_roi_shift_mm": 112
       }
