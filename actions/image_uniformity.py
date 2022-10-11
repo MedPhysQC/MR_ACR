@@ -99,7 +99,7 @@ def image_uniformity(
     image_uniformity_result_filename_path = os.path.dirname(
         image_uniformity_result_filename
     )
-    print("Write image_uniformity_result.png to: '" + image_uniformity_result_filename_path + "'")
+    print("Write image_uniformity_result.png to: '" + image_uniformity_result_filename + "'")
 
     if not os.path.exists(image_uniformity_result_filename_path):
         os.makedirs(image_uniformity_result_filename_path)

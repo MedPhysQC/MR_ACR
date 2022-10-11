@@ -114,7 +114,7 @@ def ghosting(parsed_input: List[DicomSeriesList], result, action_config) -> None
     if not os.path.exists(image_ghosting_result_filename_path):
         os.makedirs(image_ghosting_result_filename_path)
 
-    print("Write image_ghosting_result.png to: " + image_ghosting_result_filename + "'")
+    print("Write image_ghosting_result.png to: '" + image_ghosting_result_filename + "'")
 
     plot_rectangles_and_circles_on_image(
         image_data,
@@ -125,3 +125,5 @@ def ghosting(parsed_input: List[DicomSeriesList], result, action_config) -> None
     )
     result.addFloat("GhostingRowsPercentage", ghosting_rows_percentage)
     result.addFloat("GhostingColumnsPercentage", ghosting_columns_percentage)
+
+    result.addObject("Image Ghosting Image", image_ghosting_result_filename)
