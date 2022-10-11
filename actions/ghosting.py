@@ -126,4 +126,4 @@ def ghosting(parsed_input: List[DicomSeriesList], result, action_config) -> None
     result.addFloat("GhostingRowsPercentage", ghosting_rows_percentage)
     result.addFloat("GhostingColumnsPercentage", ghosting_columns_percentage)
 
-    result.addObject("Image Ghosting Image", image_ghosting_result_filename)
+    result.addObject("Image ghosting and noise", image_ghosting_result_filename)
