@@ -19,7 +19,8 @@
         "snr_series_description": "ACR SNR 8CH",
         "snr_background_roi_shift_mm": 112,
         "snr_signal_roi_diameter_mm": 150,
-        "snr_noise_roi_sides_mm": 10
+        "snr_noise_roi_sides_mm": 10,
+	"snr_noise_image_number": 6
       }
     },
     "ghosting": {
@@ -30,7 +31,8 @@
         "ghosting_roi_short_side_mm": 7,
         "ghosting_noise_roi_sides_mm": 10,
         "ghosting_phantom_roi_radius_mm": 150,
-        "ghosting_background_roi_shift_mm": 112
+        "ghosting_background_roi_shift_mm": 112,
+	"ghosting_image_number": 6
       }
     },
     "image_uniformity": {
@@ -39,7 +41,8 @@
         "image_uniformity_series_description": "ACR SNR 8CH",
         "image_uniformity_image_number": 1,
         "image_uniformity_phantom_roi_size_mm": 150,
-        "image_uniformity_uniformity_roi_size_mm": 15
+        "image_uniformity_uniformity_roi_size_mm": 15,
+	"image_uniformity_image_number": 6
       }
     },
     "geometry": {

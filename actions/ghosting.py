@@ -9,6 +9,7 @@ from util import (
     acquisition_by_series_description,
     image_data_by_series_description,
     get_pixel_spacing,
+    param_or_default,
     retrieve_ellipse_parameters,
     get_ghosting_rois_pixel_values,
     get_background_rois_pixel_values,
@@ -29,7 +30,10 @@ def ghosting(parsed_input: List[DicomSeriesList], result, action_config) -> None
     roi_shift_mm = float(action_config["params"]["ghosting_background_roi_shift_mm"])
 
     acquisition = acquisition_by_series_description(series_description, parsed_input)
-    image_data = image_data_by_series_description(series_description, parsed_input)
+    image_number = int(param_or_default(action_config["params"], "ghosting_image_number", 6))
+    image_data = image_data_by_series_description(series_description, parsed_input, image_number=image_number)
+
+
 
     actionName = "ghosting"
     print(

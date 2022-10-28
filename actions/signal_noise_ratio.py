@@ -30,6 +30,7 @@ def signal_noise_ratio(parsed_input: List[DicomSeriesList], result, action_confi
     default_signal_roi_diameter_mm = 150
     default_noise_roi_sides_mm = 7
     default_background_roi_shift_mm = 108
+    default_image_number = 5
 
     signal_roi_diameter_mm = float(param_or_default(
         action_config["params"],
@@ -47,7 +48,9 @@ def signal_noise_ratio(parsed_input: List[DicomSeriesList], result, action_confi
 
     series_description = action_config["params"]["snr_series_description"]
     acquisition = acquisition_by_series_description(series_description, parsed_input)
-    image_data = image_data_by_series_description(series_description, parsed_input)
+    image_number = int(param_or_default(action_config["params"], "snr_noise_image_number", default_image_number))
+    image_data = image_data_by_series_description(series_description, parsed_input, image_number=image_number)
+
 
     actionName = "signal_noise_ratio"
     print(

@@ -7,6 +7,7 @@ import os
 from util import (
     plot_rectangles_and_circles_on_image,
     get_points_in_circle,
+    param_or_default,
     get_pixel_spacing,
     retrieve_ellipse_parameters,
     image_data_by_series_description,
@@ -23,7 +24,9 @@ def image_uniformity(
     """
     series_description = action_config["params"]["image_uniformity_series_description"]
     acquisition = acquisition_by_series_description(series_description, parsed_input)
-    image_data = image_data_by_series_description(series_description, parsed_input)
+    image_number = int(param_or_default(action_config["params"], "image_uniformity_image_number", 6))
+    image_data = image_data_by_series_description(series_description, parsed_input, image_number=image_number)
+
 
     actionName = "image_uniformity"
     print(
