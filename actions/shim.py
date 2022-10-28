@@ -44,12 +44,12 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
         + "'"
     )
 
+    # check if there are 4 images
+    if len(acquisition) != 4:
+        raise ValueError(f"SHIM: Expected 4 images, found {len(acquisition)}")
+
     # magnitude index = 0; used for determining center of the phantom
     magnitude = acquisition[0]
-
-    # phase1 index = 2, phase2 index=3
-    phase_1 = acquisition[2]
-    phase_2 = acquisition[3]
 
     # check if acquisition has FFE in 2001,1020
     private_2001_1020 = magnitude[0x20011020].value.strip()
@@ -58,9 +58,10 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
             f"SHIM: Could not detect Philips double echo FFE. Expected 'FFE'; got {private_2001_1020}"
         )
 
-    # check if there are 4 images
-    if len(acquisition) != 4:
-        raise ValueError(f"SHIM: Expected 4 images, found {len(acquisition)}")
+    # phase1 index = 2, phase2 index=3
+    phase_1 = acquisition[2]
+    phase_2 = acquisition[3]
+
 
     # convert pixel values to radians
 

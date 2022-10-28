@@ -130,11 +130,11 @@ def geometry_z(
     image_filtered = image_data_z.copy()
 
     # filter low signals out of the image
-    image_filtered[image_filtered < image_filtered.max() / 4] = 0
+    image_filtered[image_filtered < 50] = 0
 
     # Canny edge detection
     edges_z = detect_edges(
-        image_filtered, sigma=1.5, low_threshold=3, high_threshold=100
+        image_filtered, sigma=1.5, low_threshold=3, high_threshold=75
     )
 
     # The most top right pixel with a value is the approximate top right of the phantom
