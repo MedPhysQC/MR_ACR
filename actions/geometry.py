@@ -23,9 +23,9 @@ def geometry_x_y(
     parsed_input: List[DicomSeriesList], action_config, result
 ) -> List[float]:
     series_description = action_config["params"]["geometry_x_y_series_description"]
-    image_number = int(action_config["params"][
-        "geometry_x_y_image_number"
-    ])  # TODO check image number 0/1 indexed
+    image_number = int(
+        action_config["params"]["geometry_x_y_image_number"]
+    )  # TODO check image number 0/1 indexed
     image_data = image_data_by_series_description(
         series_description, parsed_input, image_number=image_number, data_type="float"
     )  # edge detection wants floats
@@ -191,13 +191,13 @@ def geometry_z(
         ]
     ).astype("int")
     # crop unwanted parts of the image
-    pixel_range_for_cropping = round(45 / pixel_spacing)
+    pixel_range_for_cropping = round(35 / pixel_spacing)
     edges_z_crop = edges_z.copy()
-    # crop vertically, set everything out side center +- 45 mm to 0
+    # crop vertically, set everything out side center +- 35 mm to 0
     edges_z_crop[:, : phantom_center_approximate_xy[0] - pixel_range_for_cropping] = 0
     edges_z_crop[:, phantom_center_approximate_xy[0] + pixel_range_for_cropping :] = 0
 
-    # crop horizontally, set everything INSIDE center +- 45 mm to 0. This will make the resulting sinogram less noisy
+    # crop horizontally, set everything INSIDE center +- 35 mm to 0. This will make the resulting sinogram less noisy
     edges_z_crop[
         phantom_center_approximate_xy[1]
         - pixel_range_for_cropping : phantom_center_approximate_xy[1]
@@ -267,12 +267,27 @@ def geometry_z(
     # distance to center of sinogram is distance of line to center image
     sinogram_center = np.array([sinogram.shape[0] // 2, sinogram.shape[1] // 2])
 
-    angle = np.cos(np.radians(max_deg_for_sinogram / sinogram.shape[0] * (sinogram_center[0] - peak_1_coords[0])))
-    peak_1_center_distance_pixels = np.absolute((sinogram_center[1] - peak_1_coords[1]) / angle)
+    angle = np.cos(
+        np.radians(
+            max_deg_for_sinogram
+            / sinogram.shape[0]
+            * (sinogram_center[0] - peak_1_coords[0])
+        )
+    )
+    peak_1_center_distance_pixels = np.absolute(
+        (sinogram_center[1] - peak_1_coords[1]) / angle
+    )
 
-    angle = np.cos(np.radians(max_deg_for_sinogram / sinogram.shape[0] * (sinogram_center[0] - peak_2_coords[0])))
-    peak_2_center_distance_pixels = np.absolute((sinogram_center[1] - peak_2_coords[1]) / angle)
-
+    angle = np.cos(
+        np.radians(
+            max_deg_for_sinogram
+            / sinogram.shape[0]
+            * (sinogram_center[0] - peak_2_coords[0])
+        )
+    )
+    peak_2_center_distance_pixels = np.absolute(
+        (sinogram_center[1] - peak_2_coords[1]) / angle
+    )
 
     # length of phantom in mm is both lengths added and corrected for pixel spacing
     z_length_mm = (
