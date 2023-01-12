@@ -3,7 +3,7 @@
     "acqdatetime": {
       "filters": {},
       "params": {
-        "datetime_level": "Study",
+        "datetime_level": "Acquisition",
         "series_description_datetime": "ACR SNR 20CH"
       }
     },

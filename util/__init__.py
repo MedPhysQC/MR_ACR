@@ -371,9 +371,7 @@ def _remove_top(
     return x_coordinates, y_coordinates
 
 
-def detect_edges(
-    image, sigma=0.3, low_threshold=750, high_threshold=None
-) -> np.ndarray:
+def detect_edges(image, sigma=0.3, low_threshold=750, high_threshold=800) -> np.ndarray:
     """
     Detect edges on a 2d array
     :param high_threshold: high threshold for the hysteresis thresholding

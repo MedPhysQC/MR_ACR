@@ -1,16 +1,166 @@
 {
-  "comments": {
-    "author": "Guido Millenaar, NKI-AvL",
-    "description": "WADQC2.0 module for ACR MR Phantom"
-  },
-  "metaformat": "20180910",
-  "results": {
-    "AcquisitionDateTime": {
-      "constraint_period": 14,
-      "description": "date and time of acquisition",
-      "display_level": 2,
-      "display_name": "DateTime",
-      "units": ""
-    }
-  }
+	"comments": {
+		"author": "Guido Millenaar, NKI-AvL",
+		"description": "WADQC2.0 module for ACR MR Phantom (MRLinac settings)"
+	},
+	"metaformat": "20180910",
+	"results": {
+		"AcquisitionDateTime": {
+			"constraint_period": 14,
+			"description": "date and time of acquisition",
+			"display_level": 2,
+			"display_name": "DateTime",
+			"units": ""
+		},
+		"ResonanceFrequencyDelta": {
+			"description": "Difference between computed and measured Larmor frequency",
+			"display_level": 2,
+			"display_name": "ResonanceFrequencyDelta",
+			"display_position": 5,
+			"constraint_is_active": true,
+			"units": "hz",
+			"constraint_minlowhighmax": [
+				8200,
+				9200,
+				13200,
+				14200
+			],
+			"decimals": 2
+		},
+		"CombinedCoils": {
+			"description": "",
+			"display_level": 2,
+			"display_name": "CombinedCoils",
+			"display_position": 5,
+			"constraint_is_active": true,
+			"units": "hz",
+			"constraint_minlowhighmax": [
+				288,
+				324,
+				396,
+				432
+			],
+			"decimals": 2
+		},
+		"GhostingRowsPercentage": {
+			"description": "",
+			"display_level": 2,
+			"display_name": "GhostingRowsPercentage",
+			"display_position": 5,
+			"constraint_is_active": true,
+			"units": "%",
+			"constraint_minlowhighmax": [
+				-0.2,
+				-0.2,
+				0.5,
+				1
+			],
+			"decimals": 2
+		},
+		"GhostingColumnsPercentage": {
+			"description": "",
+			"display_level": 2,
+			"display_name": "GhostingColumnsPercentage",
+			"display_position": 5,
+			"constraint_is_active": true,
+			"units": "%",
+			"constraint_minlowhighmax": [
+				0,
+				0,
+				0.5,
+				1
+			],
+			"decimals": 2
+		},
+		"GeometryX": {
+			"description": "",
+			"display_level": 2,
+			"display_name": "GeometryX",
+			"display_position": 5,
+			"constraint_is_active": true,
+			"units": "mm",
+			"constraint_minlowhighmax": [
+				188.5,
+				189,
+				191,
+				191.5
+			],
+			"decimals": 2
+		},
+		"GeometryY": {
+			"description": "",
+			"display_level": 2,
+			"display_name": "GeometryY",
+			"display_position": 5,
+			"constraint_is_active": true,
+			"units": "mm",
+			"constraint_minlowhighmax": [
+				188.5,
+				189,
+				191,
+				191.5
+			],
+			"decimals": 2
+		},
+		"GeometryZ": {
+			"description": "",
+			"display_level": 2,
+			"display_name": "GeometryZ",
+			"display_position": 5,
+			"constraint_is_active": true,
+			"units": "mm",
+			"constraint_minlowhighmax": [
+				146,
+				146.5,
+				148.5,
+				149
+			],
+			"decimals": 2
+		},
+		"GeometryInPlaneRotation": {
+			"description": "",
+			"display_level": 2,
+			"display_name": "GeometryInPlaneRotation",
+			"display_position": 5,
+			"constraint_is_active": true,
+			"units": "degrees",
+			"constraint_minlowhighmax": [
+				null,
+				null,
+				null,
+				null
+			],
+			"decimals": 2
+		},
+		"Shim": {
+			"description": "",
+			"display_level": 2,
+			"display_name": "Shim",
+			"display_position": 5,
+			"constraint_is_active": true,
+			"units": "%",
+			"constraint_minlowhighmax": [
+				null,
+				null,
+				null,
+				null
+			],
+			"decimals": 2
+		},
+		"ImageUniformityPercentage": {
+			"description": "",
+			"display_level": 2,
+			"display_name": "ImageUniformityPercentage",
+			"display_position": 5,
+			"constraint_is_active": true,
+			"units": "%",
+			"constraint_minlowhighmax": [
+				null,
+				null,
+				null,
+				null
+			],
+			"decimals": 2
+		}
+	}
 }

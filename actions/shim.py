@@ -1,7 +1,11 @@
 from enum import Enum
 from typing import List
+from pathlib import Path
 
 import numpy as np
+import matplotlib.pyplot as plt
+import os
+
 
 from util import (
     acquisition_by_series_description,
@@ -62,14 +66,21 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
     phase_1 = acquisition[2]
     phase_2 = acquisition[3]
 
+    unwrap_axis_1 = None
+    unwrap_axis_2 = None
+    if hasattr(phase_1, "InPlanePhaseEncodingDirection"):
+        if phase_1.InPlanePhaseEncodingDirection.strip().upper() == "ROW":
+            unwrap_axis_1 = 0
+    if hasattr(phase_2, "InPlanePhaseEncodingDirection"):
+        if phase_2.InPlanePhaseEncodingDirection.strip().upper() == "ROW":
+            unwrap_axis_2 = 0
 
     # convert pixel values to radians
-
     if hasattr(phase_1, "RescaleSlope") and hasattr(phase_2, "RescaleSlope"):
         factor_1 = phase_1.RescaleSlope / 1000.0
-        offset_1 = 0  # TODO verify why this is 0
+        offset_1 = phase_1.RescaleIntercept / 1000.0
         factor_2 = phase_2.RescaleSlope / 1000.0
-        offset_2 = 0
+        offset_2 = phase_2.RescaleIntercept / 1000.0
     elif (
         hasattr(phase_1, "RealWorldValueMappingSequence")
         and hasattr(phase_1.RealWorldValueMappingSequence, "Item_1")
@@ -105,11 +116,6 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
             "SHIM: RescaleSlope or RescaleIntercept could not be determined. Shim analysis skipped"
         )
 
-    phase_delta = ((phase_2.pixel_array * factor_2) - offset_2) - (
-        (phase_1.pixel_array * factor_1) - offset_1
-    )
-    phase_echo_delta = phase_2.EchoTime - phase_1.EchoTime
-
     data_type = ShimDataTypes.WRAPPED_PHASE_RADIANS
 
     # TODO:: in the original MATLAB code, the part above is a separate function from below, due to vendor specific
@@ -137,13 +143,33 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
         ignore_top=relative_ignore_top,
     )
 
-    # apply the mask to the phase delta
-    masked_phase_delta = mask * phase_delta
+
+    if data_type is ShimDataTypes.WRAPPED_PHASE_RADIANS:
+        phase_delta = np.unwrap(((phase_2.pixel_array * factor_2) + offset_2) * mask, axis=unwrap_axis_2) -\
+                      np.unwrap(((phase_1.pixel_array * factor_1) + offset_1) * mask, axis=unwrap_axis_1)
+    else:
+        phase_delta = ((phase_2.pixel_array * factor_2) + offset_2) - ((phase_1.pixel_array * factor_1) + offset_1)
+
+    phase_echo_delta = phase_2.EchoTime - phase_1.EchoTime
 
     magnet_tesla = phase_1.MagneticFieldStrength
 
     if data_type is ShimDataTypes.WRAPPED_PHASE_RADIANS:
-        phase_delta_unwrapped = np.unwrap(masked_phase_delta) * mask
+        phase_delta_unwrapped = phase_delta * mask
+
+        phase_delta_unwrapped_filename = str(
+            Path(
+                result.getDirName()
+                + os.sep
+                + "result_objects"
+                + os.sep
+                + "unwrapped_phase_map.png"
+            ).absolute()
+        )  # gets instantiated relative to working directory
+
+        save_image_to_file(phase_delta_unwrapped, phase_delta_unwrapped_filename, "Unwrapped phase map cutout")
+
+
         gamma_rad_ms_T = (
             267513  # 42576 * 2 * pi;  gyromatic frequency in rad / ms * 1 / T
         )
@@ -175,3 +201,10 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
     B0_uniformity_ppm = (largest - smallest) / np.mean(B0_values)
     print(f"B0 uniformity: {B0_uniformity_ppm}")
     result.addFloat("Shim", B0_uniformity_ppm)
+
+def save_image_to_file(image, name, title):
+    plt.title(title)
+    plt.imshow(image, cmap=plt.get_cmap("Greys_r"))
+
+    plt.axis("off")
+    plt.savefig(name, dpi=300)
