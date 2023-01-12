@@ -121,6 +121,9 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
     # TODO:: in the original MATLAB code, the part above is a separate function from below, due to vendor specific
     # TODO:: acquisitions for B0 maps
 
+    # relative roi size outer
+    relative_roi_size_outer = 0.99
+
     # diameter of roi relative to phantom
     relative_roi_size = 0.95  # TODO make configurable
 
@@ -130,6 +133,16 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
     # find phantom ellipse
     # [x_axis_length, y_axis_length, center_x,center_y, phi]
     phantom_ellipse = retrieve_ellipse_parameters(image_data=magnitude.pixel_array)
+
+    mask_outer = elliptical_mask(
+        radius_x=phantom_ellipse[3] * relative_roi_size_outer,
+        radius_y=phantom_ellipse[2] * relative_roi_size_outer,
+        center_x=phantom_ellipse[0],
+        center_y=phantom_ellipse[1],
+        angle=phantom_ellipse[4],
+        dimension_x=phase_1.pixel_array.shape[0],
+        dimension_y=phase_1.pixel_array.shape[1]
+    ).astype(bool)
 
     # create mask
     mask = elliptical_mask(
@@ -141,14 +154,28 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
         dimension_x=phase_1.pixel_array.shape[0],
         dimension_y=phase_1.pixel_array.shape[1],
         ignore_top=relative_ignore_top,
-    )
+    ).astype(bool)
+
+    # Create mask for outer ring
+    masked_outer_ring = (mask_outer ^ mask)
+
+    # Calc avg value in outer ring and create new array with avg value as background and put cropped image in it
+    avg_value_set_1 = [float(x) for x in np.nditer(masked_outer_ring * phase_1.pixel_array) if x != 0.0]
+    avg_value_1 = np.average(avg_value_set_1)
+    std_value_1 = np.std(avg_value_set_1)
+    processed_image_1 = np.full(phase_1.pixel_array.shape, avg_value_1 + std_value_1) * np.invert(mask) + phase_1.pixel_array * mask
+
+    avg_value_set_2 = [float(x) for x in np.nditer(masked_outer_ring * phase_2.pixel_array) if x != 0.0]
+    avg_value_2 = np.average(avg_value_set_2)
+    std_value_2 = np.std(avg_value_set_2)
+    processed_image_2 = np.full(phase_2.pixel_array.shape, avg_value_2 + std_value_2) * np.invert(mask) + phase_2.pixel_array * mask
 
 
     if data_type is ShimDataTypes.WRAPPED_PHASE_RADIANS:
-        phase_delta = np.unwrap(((phase_2.pixel_array * factor_2) + offset_2) * mask, axis=unwrap_axis_2) -\
-                      np.unwrap(((phase_1.pixel_array * factor_1) + offset_1) * mask, axis=unwrap_axis_1)
+        phase_delta = np.unwrap(((processed_image_2 * factor_2) + offset_2) , axis=unwrap_axis_2) * mask -\
+                      np.unwrap(((processed_image_1 * factor_1) + offset_1), axis=unwrap_axis_1) * mask
     else:
-        phase_delta = ((phase_2.pixel_array * factor_2) + offset_2) - ((phase_1.pixel_array * factor_1) + offset_1)
+        phase_delta = (((processed_image_2 * factor_2) + offset_2) - ((processed_image_1 * factor_1) + offset_1)) * mask
 
     phase_echo_delta = phase_2.EchoTime - phase_1.EchoTime
 
@@ -201,6 +228,8 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
     B0_uniformity_ppm = (largest - smallest) / np.mean(B0_values)
     print(f"B0 uniformity: {B0_uniformity_ppm}")
     result.addFloat("Shim", B0_uniformity_ppm)
+    result.addObject("UnwrappedShimCutout", phase_delta_unwrapped_filename)
+
 
 def save_image_to_file(image, name, title):
     plt.title(title)
