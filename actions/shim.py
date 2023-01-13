@@ -68,15 +68,6 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
     phase_1 = acquisition[2]
     phase_2 = acquisition[3]
 
-    unwrap_axis_1 = None
-    unwrap_axis_2 = None
-    if hasattr(phase_1, "InPlanePhaseEncodingDirection"):
-        if phase_1.InPlanePhaseEncodingDirection.strip().upper() == "ROW":
-            unwrap_axis_1 = 0
-    if hasattr(phase_2, "InPlanePhaseEncodingDirection"):
-        if phase_2.InPlanePhaseEncodingDirection.strip().upper() == "ROW":
-            unwrap_axis_2 = 0
-
     # convert pixel values to radians
     if hasattr(phase_1, "RescaleSlope") and hasattr(phase_2, "RescaleSlope"):
         factor_1 = phase_1.RescaleSlope / 1000.0
@@ -163,7 +154,7 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
         ignore_top=relative_ignore_top,
     ).astype(bool)
 
-    def process_image(inner_image, inner_mask, inner_mask_outer, inner_factor, inner_offset, unwrap=False, unwrap_axis=None):
+    def process_image(inner_image, inner_mask, inner_mask_outer, inner_factor, inner_offset, unwrap=False):
         inner_processed_image = np.copy(inner_image)
         inner_processed_image = inner_processed_image * inner_factor + inner_offset
         inner_processed_image = inner_processed_image * inner_mask_outer
@@ -176,8 +167,8 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
     # Calc avg value in outer ring and create new array with avg value as background and put cropped image in it
 
     if data_type is ShimDataTypes.WRAPPED_PHASE_RADIANS:
-        processed_image_1 = process_image(phase_1.pixel_array, mask, mask_outer, factor_1, offset_1, unwrap=True, unwrap_axis=unwrap_axis_1)
-        processed_image_2 = process_image(phase_2.pixel_array, mask, mask_outer, factor_2, offset_2, unwrap=True, unwrap_axis=unwrap_axis_2)
+        processed_image_1 = process_image(phase_1.pixel_array, mask, mask_outer, factor_1, offset_1, unwrap=True)
+        processed_image_2 = process_image(phase_2.pixel_array, mask, mask_outer, factor_2, offset_2, unwrap=True)
     else:
         processed_image_1 = process_image(phase_1.pixel_array, mask, mask_outer, factor_1, offset_1)
         processed_image_2 = process_image(phase_2.pixel_array, mask, mask_outer, factor_2, offset_2)
