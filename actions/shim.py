@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+import skimage.restoration
+
 
 from util import (
     acquisition_by_series_description,
@@ -166,27 +168,8 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
         inner_processed_image = inner_processed_image * inner_factor + inner_offset
         inner_processed_image = inner_processed_image * inner_mask_outer
 
-        inner_processed_image = np.flip(inner_processed_image, axis=0)
-        inner_mask_outer = np.flip(inner_mask_outer, axis=0)
-
-        background_image = np.full(inner_image.shape, 0.0)
-
-        for current_column in range(inner_processed_image.shape[1]):
-            for current_row in range(inner_processed_image.shape[0]):
-                if inner_processed_image[current_row, current_column] != 0.0:
-                    if inner_processed_image[current_row, current_column] < 0.0:
-                        background_image[:, current_column] = -3.14 * 0.8
-                    else:
-                        background_image[:, current_column] = 3.14 * 0.8
-                    break
-
-        inner_processed_image = background_image * np.invert(inner_mask_outer) + inner_processed_image * inner_mask_outer
-
         if unwrap:
-            inner_processed_image = np.unwrap(inner_processed_image, axis=unwrap_axis)
-
-        inner_processed_image = np.flip(inner_processed_image, axis=0)
-        inner_mask_outer = np.flip(inner_mask_outer, axis=0)
+            inner_processed_image = skimage.restoration.unwrap_phase(inner_processed_image)
 
         return inner_processed_image * mask
 
