@@ -134,9 +134,15 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
     # [x_axis_length, y_axis_length, center_x,center_y, phi]
     phantom_ellipse = retrieve_ellipse_parameters(image_data=magnitude.pixel_array)
 
+    # create large mask
+    # get top 5 vlaues avg
+    # use taht to determine pos or neg
+
+    # create masks
+
     mask_outer = elliptical_mask(
-        radius_x=phantom_ellipse[3] * relative_roi_size_outer,
-        radius_y=phantom_ellipse[2] * relative_roi_size_outer,
+        radius_x=phantom_ellipse[3] * relative_roi_size,
+        radius_y=phantom_ellipse[2] * relative_roi_size,
         center_x=phantom_ellipse[0],
         center_y=phantom_ellipse[1],
         angle=phantom_ellipse[4],
@@ -144,7 +150,6 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
         dimension_y=phase_1.pixel_array.shape[1]
     ).astype(bool)
 
-    # create mask
     mask = elliptical_mask(
         radius_x=phantom_ellipse[3] * relative_roi_size,
         radius_y=phantom_ellipse[2] * relative_roi_size,
@@ -156,27 +161,45 @@ def shim(parsed_input: List[DicomSeriesList], result, action_config) -> None:
         ignore_top=relative_ignore_top,
     ).astype(bool)
 
-    # Create mask for outer ring
-    masked_outer_ring = (mask_outer ^ mask)
+    def process_image(inner_image, inner_mask, inner_mask_outer, inner_factor, inner_offset, unwrap=False, unwrap_axis=None):
+        inner_processed_image = np.copy(inner_image)
+        inner_processed_image = inner_processed_image * inner_factor + inner_offset
+        inner_processed_image = inner_processed_image * inner_mask_outer
+
+        inner_processed_image = np.flip(inner_processed_image, axis=0)
+        inner_mask_outer = np.flip(inner_mask_outer, axis=0)
+
+        background_image = np.full(inner_image.shape, 0.0)
+
+        for current_column in range(inner_processed_image.shape[1]):
+            for current_row in range(inner_processed_image.shape[0]):
+                if inner_processed_image[current_row, current_column] != 0.0:
+                    if inner_processed_image[current_row, current_column] < 0.0:
+                        background_image[:, current_column] = -3.14 * 0.8
+                    else:
+                        background_image[:, current_column] = 3.14 * 0.8
+                    break
+
+        inner_processed_image = background_image * np.invert(inner_mask_outer) + inner_processed_image * inner_mask_outer
+
+        if unwrap:
+            inner_processed_image = np.unwrap(inner_processed_image, axis=unwrap_axis)
+
+        inner_processed_image = np.flip(inner_processed_image, axis=0)
+        inner_mask_outer = np.flip(inner_mask_outer, axis=0)
+
+        return inner_processed_image * mask
 
     # Calc avg value in outer ring and create new array with avg value as background and put cropped image in it
-    avg_value_set_1 = [float(x) for x in np.nditer(masked_outer_ring * phase_1.pixel_array) if x != 0.0]
-    avg_value_1 = np.average(avg_value_set_1)
-    std_value_1 = np.std(avg_value_set_1)
-    processed_image_1 = np.full(phase_1.pixel_array.shape, avg_value_1 + std_value_1) * np.invert(mask) + phase_1.pixel_array * mask
-
-    avg_value_set_2 = [float(x) for x in np.nditer(masked_outer_ring * phase_2.pixel_array) if x != 0.0]
-    avg_value_2 = np.average(avg_value_set_2)
-    std_value_2 = np.std(avg_value_set_2)
-    processed_image_2 = np.full(phase_2.pixel_array.shape, avg_value_2 + std_value_2) * np.invert(mask) + phase_2.pixel_array * mask
-
 
     if data_type is ShimDataTypes.WRAPPED_PHASE_RADIANS:
-        phase_delta = np.unwrap(((processed_image_2 * factor_2) + offset_2) , axis=unwrap_axis_2) * mask -\
-                      np.unwrap(((processed_image_1 * factor_1) + offset_1), axis=unwrap_axis_1) * mask
+        processed_image_1 = process_image(phase_1.pixel_array, mask, mask_outer, factor_1, offset_1, unwrap=True, unwrap_axis=unwrap_axis_1)
+        processed_image_2 = process_image(phase_2.pixel_array, mask, mask_outer, factor_2, offset_2, unwrap=True, unwrap_axis=unwrap_axis_2)
     else:
-        phase_delta = (((processed_image_2 * factor_2) + offset_2) - ((processed_image_1 * factor_1) + offset_1)) * mask
+        processed_image_1 = process_image(phase_1.pixel_array, mask, mask_outer, factor_1, offset_1)
+        processed_image_2 = process_image(phase_2.pixel_array, mask, mask_outer, factor_2, offset_2)
 
+    phase_delta = (processed_image_2 - processed_image_1)
     phase_echo_delta = phase_2.EchoTime - phase_1.EchoTime
 
     magnet_tesla = phase_1.MagneticFieldStrength
