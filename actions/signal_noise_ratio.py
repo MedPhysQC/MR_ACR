@@ -35,7 +35,7 @@ Changelog:
     20240919: initial version 
 """
 
-__version__ = '20230919'
+__version__ = '20240919'
 __author__ = 'jkuijer'
 
 from typing import List
