@@ -29,11 +29,13 @@ Changelog:
     20240919: initial version 
 """
 
-__version__ = '20230919'
+__version__ = '20240919'
 __author__ = 'jkuijer'
 
 from typing import List
 import numpy as np
+from scipy import fft
+
 
 from util import (
     DicomSeriesList,
@@ -80,11 +82,28 @@ def geometry_xy(
         + series[0]["SeriesInstanceUID"].value
         + "'"
     )
-
+    
+    upsampling_factor = 2
+    if upsampling_factor > 1:
+        # sinc interpolation
+        x = fft.fft2(image_data)
+        sz = len(x) # matrix size
+        sz2 = sz // 2
+        # empty matrix for zero-padded k-space
+        x_pad = np.zeros( (sz*upsampling_factor, sz*upsampling_factor), dtype=complex )
+        # spatial frequency zero is in corner of matrix, thus copy corners to new matrix
+        x_pad[0:sz2,0:sz2] = x[0:sz2,0:sz2]
+        x_pad[-sz2:,0:sz2] = x[-sz2:,0:sz2]
+        x_pad[-sz2:,-sz2:] = x[-sz2:,-sz2:]
+        x_pad[0:sz2,-sz2:] = x[0:sz2,-sz2:]
+        y = fft.ifft2((x_pad))
+        image_data = abs(y)
+    
     # retrieve pixel spacing [x,y]
-    pixel_spacing = get_pixel_spacing(series)
+    pixel_spacing = get_pixel_spacing(series) / upsampling_factor
     mask_air_bubble_px = mask_air_bubble_mm / pixel_spacing
     print("  air bubble mask size: {:.1f}".format(mask_air_bubble_mm) + " mm")
+    
     
     [
         ( x_center_px, y_center_px, x_axis_length_px, y_axis_length_px, phi ),
