@@ -6,7 +6,7 @@
   },
   "module": {
     "description": "MR ACR",
-    "executable": "docker_starter.py",
+    "executable": "mr_acr.py",
     "name": "MR_ACR",
     "code": "python",
     "dependencies": [
