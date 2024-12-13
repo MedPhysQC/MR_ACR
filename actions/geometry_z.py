@@ -43,6 +43,7 @@ import numpy as np
 from scipy import ndimage
 
 from util import (
+    param_or_default,
     DicomSeriesList,
     plot_edges_on_image,
     interpolation_peak_offset,
@@ -50,6 +51,7 @@ from util import (
     get_pixel_spacing,
     series_by_series_description,
     image_data_by_series_description,
+    image_data_from_series,
 )
 
 
@@ -62,11 +64,6 @@ def geometry_z(
 
     series_description_z = action_config["params"]["geometry_z_series_description"]
     print( "  search for configured SeriesDescription: " + series_description_z )
-
-    # Get image data
-    image_data_z = image_data_by_series_description(
-        series_description_z, parsed_input, data_type="float"
-    )  # edge detection wants floats
 
     # Get dicom data
     series_z = series_by_series_description(
@@ -82,6 +79,15 @@ def geometry_z(
         + series_z[0]["SeriesInstanceUID"].value
         + "'"
     )
+
+    # get image data
+    image_number_z = int(
+        param_or_default(action_config["params"], "geometry_z_image_number", 1)
+    )
+    print( f"  image number = {image_number_z}" )
+
+    image_data_z = image_data_from_series(series_z, image_number = image_number_z).astype("float")
+
 
     # Get pixel spacing
     pixel_spacing = get_pixel_spacing(series_z)
