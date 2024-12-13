@@ -28,10 +28,10 @@ TODO: Implement SiemensServiceStimEcho
 
 Changelog:
     20240919: initial version 
-
+    20241213 / jkuijer: add support for SiemensServiceStimEcho type
 """
 
-__version__ = '20230919'
+__version__ = '20241213'
 __author__ = 'jkuijer'
 
 from enum import Enum
@@ -45,6 +45,7 @@ from util import (
 
 
 class B0_DataType(Enum):
+    B0_MAGNITUDE = 0
     B0_PHASE_RAD = 1
     B0_PPM = 2
     B0_HZ = 3
@@ -390,6 +391,43 @@ def SiemensPhaseDifference(series_description, parsed_input, action_config):
 
 
 def SiemensServiceStimEcho(series_description, parsed_input, action_config):
-    raise NotImplementedError("SiemensServiceStimEcho not yet implemented")
-    B0_map = None
-    return B0_map
+    # Simple copy of the magnitude image with the interference pattern
+    # to display that in the report. The user can manually count the stripes.
+    print("  getting B0 series for SiemensServiceStimEcho")
+    
+    # only need one magnitude image
+    print( "  search for configured SeriesDescription: " + series_description )
+
+    # configuration of images number for magnitude images
+    # if not configured assume single slice B0 map with image numbers 1
+    image_number_mag = int(
+        param_or_default(action_config["params"], "B0_uniformity_image_number_magnitude", 1)
+    )
+    print( f"  image numbers magnitude = {image_number_mag}" )
+
+    # find series
+    series = series_by_series_description(series_description, parsed_input)
+
+    print(
+        "  matched with series number: "
+        + str( series[0]["SeriesNumber"].value )
+        + "\n  study_instance_uid: '"
+        + series[0]["StudyInstanceUID"].value
+        + "'\n  series_instance_uid: '"
+        + series[0]["SeriesInstanceUID"].value
+        + "'"
+    )
+
+    # get the pixel data
+    image_data_mag = image_data_from_series(series).astype("float32")
+    # other header info
+    delta_TE = float(series[0].EchoTime)
+    field_strength_T = float( series[0].MagneticFieldStrength )
+    
+    return B0_Map(
+        image_data_mag = image_data_mag,
+        image_data_phs = None, 
+        data_type = B0_DataType.B0_MAGNITUDE,
+        delta_TE = delta_TE,
+        field_strength_T = field_strength_T
+    )
