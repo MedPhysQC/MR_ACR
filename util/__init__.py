@@ -11,6 +11,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Library of utility routines for use in multiple sub-modules
+
+Changelog:
+    20240919: initial version
+    20241213 / jkuijer: bug fix in interpolation_peak_offset()
+        error for interpolation at edge of image
+"""
+
+
 import random
 from typing import List, Tuple, Any, Union
 #import logging as log
@@ -480,15 +490,19 @@ def interpolation_peak_offset(data: np.ndarray, peak_index: int) -> float:
     :return: the approximate peak
     """
     # set x coordinates from -0.5 to +0.5 so the zero crossing can be added to the peak directly
-    derived_1 = (-0.5, data[peak_index    ] - data[peak_index - 1])
-    derived_2 = ( 0.5, data[peak_index + 1] - data[peak_index    ])
-
-    slope = (derived_2[1] - derived_1[1]) / (derived_2[0] - derived_1[0])
-
-    # y = mx + b --> b = y - mx
-    offset = derived_1[1] - (slope * derived_1[0])
-    # now solve 0 = slope*x + offset
-    zero_point = -offset / slope
+    if peak_index > 0 and peak_index < len(data)-1:
+        derived_1 = (-0.5, data[peak_index    ] - data[peak_index - 1])            
+        derived_2 = ( 0.5, data[peak_index + 1] - data[peak_index    ])
+    
+        slope = (derived_2[1] - derived_1[1]) / (derived_2[0] - derived_1[0])
+    
+        # y = mx + b --> b = y - mx
+        offset = derived_1[1] - (slope * derived_1[0])
+        # now solve 0 = slope*x + offset
+        zero_point = -offset / slope
+    else:
+        # cannot interpolate at edge of image.
+        zero_point = 0
 
     return zero_point
 

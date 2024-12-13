@@ -30,10 +30,11 @@ output: length of phantom in Z-direction
    distance between phantom edges.
 
 Changelog:
-    20240919: initial version 
+    20240919: initial version
+    20241213 / jkuijer: more selective peakfinding in sinogram to find low-intensity edge
 """
 
-__version__ = '20240919'
+__version__ = '20241213'
 __author__ = 'jkuijer'
 
 from typing import List
@@ -159,15 +160,14 @@ def geometry_z(
     # find the column index for the first peak over 90% of the max value
     # this works well as we expect two high peaks in the data that are close to each other in value
     # a peak is where the following value is lower than the current
-    threshold = 0.1 #0.60
+    threshold = 0.9 #0.60
     print("  threshold for peak finding in sinogram (relative to max): {:.2f}".format(threshold) )
 
     peak_first = [
         (index, value)
         for index, value in enumerate(sino_max_per_row[:-1])
         if sino_max_per_row[index + 1] < value
-        if value > np.max(sino_max_per_row) * threshold
-        #if value > threshold
+        if value > np.max(sino_max_per_row[:phantom_center_approximate_xy[1]]) * threshold
     ][0]
 
     # find the column index for the last peak over 90% of the max value
@@ -176,8 +176,7 @@ def geometry_z(
         (len(sino_max_per_row) - index - 1, value)
         for index, value in enumerate(np.flip(sino_max_per_row)[:-1])
         if np.flip(sino_max_per_row)[index + 1] < value
-        if value > np.max(sino_max_per_row) * threshold
-        #if value > threshold
+        if value > np.max(sino_max_per_row[phantom_center_approximate_xy[1]:]) * threshold
     ][0]
 
     # take the peak values to match with the sinogram

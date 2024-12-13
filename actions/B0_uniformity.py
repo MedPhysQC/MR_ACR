@@ -31,9 +31,10 @@ output: difference between max and min B0 field strength within ROI
 
 Changelog:
     20240919: initial version 
+    20241213 / jkuijer: add support for SiemensServiceStimEcho type
 """
 
-__version__ = '20240919'
+__version__ = '20241213'
 __author__ = 'jkuijer'
 
 from typing import List
@@ -114,7 +115,14 @@ def B0_uniformity(parsed_input: List[DicomSeriesList], result, action_config) ->
         raise AttributeError(f"WARNING: configured action '{B0_map_type}' is not available, skipping...")
 
 
+    # first deal with option of simple magnitude image as output, no further calculations
+    if B0_map.data_type is B0_DataType.B0_MAGNITUDE:
+        magn_filename = "B0_map_magnitude.png"
+        save_magnitude_to_file(B0_map.image_data[0], magn_filename, f"B0 uniformity for TE={B0_map.delta_TE}")
+        result.addObject("B0_map", magn_filename)
+        return
 
+    # for other options: quantitative analysis
     # find phantom ellipse
     # [center_x, center_y, x_axis_length, y_axis_length, phi]
     [ phantom_ellipse, _, _ ] = retrieve_ellipse_parameters(image_data=B0_map.image_data[0])
@@ -199,6 +207,17 @@ def save_image_to_file(image, name, title):
     plt.title(title)
     im = plt.imshow(image, cmap=plt.get_cmap("plasma"))
     plt.colorbar(im)
+
+    plt.axis("off")
+    plt.savefig(name, dpi=200)
+    
+    plt.clf()
+    plt.close()
+    
+    
+def save_magnitude_to_file(image, name, title):
+    plt.title(title)
+    plt.imshow(image, cmap=plt.get_cmap("gray"))
 
     plt.axis("off")
     plt.savefig(name, dpi=200)

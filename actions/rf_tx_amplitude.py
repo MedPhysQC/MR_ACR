@@ -11,6 +11,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Get transmitter amplitude from the DICOM header
+
+Workflow:
+input: any image of the QC test
+output: transmitter amplitude
+       
+
+Changelog:
+    20240919: initial version
+    20241213 / jkuijer: improved support for Siemens CSA protocol reading
+    - support for CSA protocol in 0x1020
+    - get encoding type (latin, utf etc) from the header and use it to read CSA protocol
+"""
+
+__version__ = '20241213'
+__author__ = 'jkuijer'
+
+
 from typing import List
 import numbers
 
@@ -64,10 +83,12 @@ def rf_transmitter_amplitude(
 
     TxAmpl = None
     try:
-        if rf_tag_parsed[1] == '0x1019':
+        if rf_tag_parsed[1] == '0x1019' or rf_tag_parsed[1] == '0x1020':
             # assume it is Siemens protocol in private field    
-            print( "  assuming Siemens private field in 0x1019")
-            protocol = series[0][rf_tag_parsed].value.decode("utf-8")
+            print( f"  assuming Siemens private field in {rf_tag_parsed[1]}")
+            encoding_type = series[0].read_encoding[0]
+            print( f"  encoding type: {encoding_type}" )
+            protocol = series[0][rf_tag_parsed].value.decode( encoding_type )
             
             # decode the substring flReferenceAmplitude\t = \t374.940124512\n
             refAmplTxtIndex = protocol.find( "flReferenceAmplitude" )
