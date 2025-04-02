@@ -33,10 +33,12 @@ output: SNR, with noise estimated from background ROIs.
    0.655 * (signal_phantom / StdDev_background)
 
 Changelog:
-    20240919: initial version 
+    20240919: initial version
+    20250326: first stage of support for Philips uncombined images (series with additional no-RF noise-only images)
+              TODO: use no-RF images for noise measurement
 """
 
-__version__ = '20240919'
+__version__ = '20250326'
 __author__ = 'jkuijer'
 
 from typing import List
@@ -157,9 +159,25 @@ def signal_noise_ratio_uncombined(parsed_input: List[DicomSeriesList], result, a
         image_number = range( 1, len(series)+1 )
     for i in image_number:
         image_data_uc.append( image_data_from_series( series, i ) )
-        # if coil names are not configured: try to read coil name from DICOM tag (Siemens)
+        # GE needs coil names list in config
+        # if coil names are not configured: try to read coil name from DICOM tag
+        # Siemens
         if ( not coil_names_configured ) and [0x0021,0x114f] in series[i-1]:
             coil_names.append( series[i-1][0x0021,0x114f].value )
+        else:
+            # Philips
+            # for uncombined series with signal images and separate noise images: 
+            # - ["TemporalPositionIdentifier"] == '1' for signal image and == '2' for noise image
+            # - for now just calculate SNR from background noise (ignore noise images)
+            # - TODO: calc SNR using the noise images
+            if (
+                ( not coil_names_configured )
+                and "TemporalPositionIdentifier" in series[i-1]
+                # ignore noise image with ["TemporalPositionIdentifier"].value == '2'
+                and series[i-1]["TemporalPositionIdentifier"].value == '1'
+                and [0x2001,0x1002] in series[i-1]
+            ):
+                coil_names.append( series[i-1][0x2001,0x1002].value )
 
     comb_image_data = np.sqrt( sum( np.square( [ i.astype('float') for i in image_data_uc ] ) ) ).astype('uint16')
     
@@ -196,4 +214,7 @@ def signal_noise_ratio_uncombined(parsed_input: List[DicomSeriesList], result, a
         if background_roi_std > 0.0001:
             signal_to_noise_ratio = 0.655 * (center_roi_mean / background_roi_std)
     
-        result.addFloat( "SNR_Coil_" + coil_name, "{:.2f}".format(signal_to_noise_ratio) )
+        print(
+            "  SNR_Coil_" + str(coil_name), "{:.2f}".format(signal_to_noise_ratio)
+        )
+        result.addFloat( "SNR_Coil_" + str(coil_name), "{:.2f}".format(signal_to_noise_ratio) )
