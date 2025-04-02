@@ -34,11 +34,14 @@ output: SNR, with noise estimated from background ROIs.
 
 Changelog:
     20240919: initial version
-    20250326: first stage of support for Philips uncombined images (series with additional no-RF noise-only images)
-              TODO: use no-RF images for noise measurement
+    20250326: - first stage of support for Philips uncombined images (series with additional no-RF noise-only images)
+              - TODO: use no-RF images for noise measurement
+    20250401 / jkuijer:
+              - more robust config param reading
+              - support reading of MRIdian coil names from DICOM header
 """
 
-__version__ = '20250326'
+__version__ = '20250401'
 __author__ = 'jkuijer'
 
 from typing import List
@@ -47,8 +50,8 @@ import numpy as np
 
 from util import (
     DicomSeriesList,
-    param_or_default,
     param_or_default_as_int,
+    param_or_default_as_float,
     series_by_series_description,
     image_data_from_series,
     retrieve_ellipse_center,
@@ -79,19 +82,19 @@ def signal_noise_ratio_uncombined(parsed_input: List[DicomSeriesList], result, a
     actionName = "signal_noise_ratio_uncombined"
     print( "> action " + actionName )
 
-    signal_roi_diameter_mm = float(param_or_default(
+    signal_roi_diameter_mm = param_or_default_as_float(
         action_config["params"],
         "snr_uc_signal_roi_diameter_mm",
-        default_signal_roi_diameter_mm,
-    ))
-    noise_roi_sides_mm = float(param_or_default(
+        default_signal_roi_diameter_mm
+    )
+    noise_roi_sides_mm = param_or_default_as_float(
         action_config["params"], "snr_uc_noise_roi_sides_mm", default_noise_roi_sides_mm
-    ))
-    background_roi_shift_mm = float(param_or_default(
+    )
+    background_roi_shift_mm = param_or_default_as_float(
         action_config["params"],
         "snr_uc_background_roi_shift_mm",
-        default_background_roi_shift_mm,
-    ))
+        default_background_roi_shift_mm
+    )
 
     series_description = action_config["params"]["snr_uc_series_description"]
     print( "  number of series:  " + str(len(parsed_input)) )
@@ -164,6 +167,9 @@ def signal_noise_ratio_uncombined(parsed_input: List[DicomSeriesList], result, a
         # Siemens
         if ( not coil_names_configured ) and [0x0021,0x114f] in series[i-1]:
             coil_names.append( series[i-1][0x0021,0x114f].value )
+        # ViewRay MRIdian
+        elif ( not coil_names_configured ) and [0x0051,0x100f] in series[i-1]:
+            coil_names.append( series[i-1][0x0051,0x100f].value )
         else:
             # Philips
             # for uncombined series with signal images and separate noise images: 
