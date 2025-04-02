@@ -32,9 +32,10 @@ output: length of phantom in Z-direction
 Changelog:
     20240919: initial version
     20241213 / jkuijer: more selective peakfinding in sinogram to find low-intensity edge
+    20250401 / jkuijer: more robust config param reading
 """
 
-__version__ = '20241213'
+__version__ = '20250401'
 __author__ = 'jkuijer'
 
 from typing import List
@@ -43,14 +44,13 @@ import numpy as np
 from scipy import ndimage
 
 from util import (
-    param_or_default,
+    param_or_default_as_int,
     DicomSeriesList,
     plot_edges_on_image,
     interpolation_peak_offset,
     radon_transform,
     get_pixel_spacing,
     series_by_series_description,
-    image_data_by_series_description,
     image_data_from_series,
 )
 
@@ -81,9 +81,7 @@ def geometry_z(
     )
 
     # get image data
-    image_number_z = int(
-        param_or_default(action_config["params"], "geometry_z_image_number", 1)
-    )
+    image_number_z = param_or_default_as_int(action_config["params"], "geometry_z_image_number", None)
     print( f"  image number = {image_number_z}" )
 
     image_data_z = image_data_from_series(series_z, image_number = image_number_z).astype("float")

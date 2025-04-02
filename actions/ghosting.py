@@ -33,9 +33,10 @@ output: ghosting as defined in the ACR guide.
 
 Changelog:
     20240919: initial version 
+    20250401 / jkuijer: more robust config param reading
 """
 
-__version__ = '20240919'
+__version__ = '20250401'
 __author__ = 'jkuijer'
 
 from typing import List
@@ -44,8 +45,8 @@ import numpy as np
 
 from util import (
     DicomSeriesList,
-    param_or_default,
     param_or_default_as_int,
+    param_or_default_as_float,
     series_by_series_description,
     image_data_from_series,
     get_pixel_spacing,
@@ -64,13 +65,39 @@ def ghosting(parsed_input: List[DicomSeriesList], result, action_config) -> None
     actionName = "ghosting"
     print( "> action " + actionName )
     
-    series_description = action_config["params"]["ghosting_series_description"]
-    ghosting_roi_short_side_mm = float(action_config["params"]["ghosting_roi_short_side_mm"])
-    ghosting_roi_long_side_mm = float(action_config["params"]["ghosting_roi_long_side_mm"])
-    noise_roi_sides_mm = float(action_config["params"]["ghosting_noise_roi_sides_mm"])
-    phantom_roi_mm = float(action_config["params"]["ghosting_phantom_roi_diameter_mm"])
-    roi_shift_mm = float(action_config["params"]["ghosting_background_roi_shift_mm"])
+    #ghosting_roi_short_side_mm = float(action_config["params"]["ghosting_roi_short_side_mm"])
+    #ghosting_roi_long_side_mm = float(action_config["params"]["ghosting_roi_long_side_mm"])
+    #noise_roi_sides_mm = float(action_config["params"]["ghosting_noise_roi_sides_mm"])
+    #phantom_roi_mm = float(action_config["params"]["ghosting_phantom_roi_diameter_mm"])
+    #roi_shift_mm = float(action_config["params"]["ghosting_background_roi_shift_mm"])
+    
+    ghosting_roi_short_side_mm = param_or_default_as_float( 
+        action_config["params"], 
+        "ghosting_roi_short_side_mm", 
+        14 
+    )
+    ghosting_roi_long_side_mm = param_or_default_as_float( 
+        action_config["params"], 
+        "ghosting_roi_long_side_mm", 
+        56 
+    )
+    noise_roi_sides_mm = param_or_default_as_float( 
+        action_config["params"], 
+        "ghosting_noise_roi_sides_mm", 
+        14
+    )
+    phantom_roi_mm = param_or_default_as_float( 
+        action_config["params"], 
+        "ghosting_phantom_roi_diameter_mm", 
+        150 
+    )
+    roi_shift_mm = param_or_default_as_float( 
+        action_config["params"], 
+        "ghosting_background_roi_shift_mm", 
+        112 
+    )
 
+    series_description = action_config["params"]["ghosting_series_description"]    
     print( "  search for configured SeriesDescription: " + series_description )
 
     number_of_img_in_series = param_or_default_as_int(
@@ -83,7 +110,7 @@ def ghosting(parsed_input: List[DicomSeriesList], result, action_config) -> None
 
 
     series = series_by_series_description(series_description, parsed_input, number_of_img_in_series)
-    image_number = int(param_or_default(action_config["params"], "ghosting_image_number", 6))
+    image_number = param_or_default_as_int( action_config["params"], "ghosting_image_number", 6 )
 
     print(
         "  matched with series number: "

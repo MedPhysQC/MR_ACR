@@ -27,9 +27,10 @@ output: diameter of phantom along X- and Y-directions
 
 Changelog:
     20240919: initial version 
+    20250401 / jkuijer: more robust config param reading
 """
 
-__version__ = '20240919'
+__version__ = '20250401'
 __author__ = 'jkuijer'
 
 from typing import List
@@ -39,7 +40,8 @@ from scipy import fft
 
 from util import (
     DicomSeriesList,
-    param_or_default,
+    param_or_default_as_int,
+    param_or_default_as_float,
     plot_edges_on_image,
     get_pixel_spacing,
     series_by_series_description,
@@ -59,13 +61,8 @@ def geometry_xy(
     series_description = action_config["params"]["geometry_xy_series_description"]
     print( "  search for configured SeriesDescription: " + series_description )
 
-    image_number = int(
-        param_or_default(action_config["params"], "geometry_xy_image_number", 6)
-    )
-    
-    mask_air_bubble_mm = float( 
-        param_or_default(action_config["params"], "geometry_xy_air_bubble_mask_size_mm", 50)
-    )
+    image_number = param_or_default_as_int(action_config["params"], "geometry_xy_image_number", 6)
+    mask_air_bubble_mm = param_or_default_as_float(action_config["params"], "geometry_xy_air_bubble_mask_size_mm", 50)
     
     image_data = image_data_by_series_description(
         series_description, parsed_input, image_number=image_number, data_type="float"

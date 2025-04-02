@@ -33,9 +33,10 @@ output: SNR, with noise estimated from background ROIs.
 
 Changelog:
     20240919: initial version 
+    20250401 / jkuijer: more robust config param reading
 """
 
-__version__ = '20240919'
+__version__ = '20250401'
 __author__ = 'jkuijer'
 
 from typing import List
@@ -46,6 +47,7 @@ from util import (
     DicomSeriesList,
     param_or_default,
     param_or_default_as_int,
+    param_or_default_as_float,
     series_by_series_description,
     image_data_from_series,
     retrieve_ellipse_center,
@@ -74,19 +76,21 @@ def signal_noise_ratio(parsed_input: List[DicomSeriesList], result, action_confi
     actionName = "signal_noise_ratio"
     print( "> action " + actionName )
 
-    signal_roi_diameter_mm = float(param_or_default(
+    signal_roi_diameter_mm = param_or_default_as_float(
         action_config["params"],
         "snr_signal_roi_diameter_mm",
-        default_signal_roi_diameter_mm,
-    ))
-    noise_roi_sides_mm = float(param_or_default(
-        action_config["params"], "snr_noise_roi_sides_mm", default_noise_roi_sides_mm
-    ))
-    background_roi_shift_mm = float(param_or_default(
+        default_signal_roi_diameter_mm
+    )
+    noise_roi_sides_mm = param_or_default_as_float(
+        action_config["params"],
+        "snr_noise_roi_sides_mm",
+        default_noise_roi_sides_mm
+    )
+    background_roi_shift_mm = param_or_default_as_float(
         action_config["params"],
         "snr_background_roi_shift_mm",
-        default_background_roi_shift_mm,
-    ))
+        default_background_roi_shift_mm
+    )
 
     series_description = action_config["params"]["snr_series_description"]
     print( "  number of series:  " + str(len(parsed_input)) )

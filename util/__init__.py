@@ -18,6 +18,7 @@ Changelog:
     20240919: initial version
     20241213 / jkuijer: bug fix in interpolation_peak_offset()
         error for interpolation at edge of image
+    20250401 / jkuijer: more debug info on config param reading and added param_or_default_as_float
 """
 
 
@@ -51,16 +52,37 @@ def param_or_default(params: dict, setting: str, default: Any) -> Any:
     if setting in params:
         return params[setting]
     else:
+        print( f"  Parameter \"{setting}\" is not configured, using default value {default}" )
         return default
 
 
 def param_or_default_as_int(params: dict, setting: str, default: Any) -> Any:
     if setting in params:
+        if not params[setting]:
+            # empty string
+            print( f"  Parameter \"{setting}\" is empty string, using default value {default}" )
+            return default
         try:
             return int( params[setting] )
         except:
             return default
     else:
+        print( f"  Parameter \"{setting}\" is not configured, using default value {default}" )
+        return default
+
+
+def param_or_default_as_float(params: dict, setting: str, default: Any) -> Any:
+    if setting in params:
+        if not params[setting]:
+            # empty string
+            print( f"  Parameter \"{setting}\" is empty string, using default value {default}" )
+            return default
+        try:
+            return float( params[setting] )
+        except:
+            return default
+    else:
+        print( f"  Parameter \"{setting}\" is not configured, using default value {default}" )
         return default
 
 
@@ -428,6 +450,8 @@ def retrieve_ellipse_parameters(image_data, mask_air_bubble_px: int = 60, return
 
     
     # remove outliers i.e. edges far away from fitted ellipse
+    # note: for phantoms that have features near the phantom edge, maybe need a smaller number?
+    # TODO: make max_distance_px configurable?
     max_distance_px = 10
     print( "  Remove data > {:.0f} pixels from fitted ellipse.".format(max_distance_px) )
 

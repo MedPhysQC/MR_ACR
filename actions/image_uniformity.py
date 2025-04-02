@@ -26,9 +26,10 @@ output: image uniformity as defined in the ACR guide.
 
 Changelog:
     20240919: initial version 
+    20250401 / jkuijer: more robust config param reading
 """
 
-__version__ = '20240919'
+__version__ = '20250401'
 __author__ = 'jkuijer'
 
 from typing import List
@@ -36,7 +37,6 @@ from typing import List
 import numpy as np
 
 from util import (
-    param_or_default,
     param_or_default_as_int,
     plot_rectangles_and_circles_on_image,
     get_points_in_circle,
@@ -61,15 +61,15 @@ def image_uniformity(
     print( "  search for configured SeriesDescription: " + series_description )
 
     number_of_img_in_series = param_or_default_as_int(
-        action_config["params"],
-        "image_uniformity_number_of_images_in_series",
-        None
+        action_config["params"], 
+        "image_uniformity_number_of_images_in_series", 
+        None 
     )
     if number_of_img_in_series:
         print( "  search for configured number of images in series: " + str(number_of_img_in_series) )            
 
     series = series_by_series_description(series_description, parsed_input, number_of_img_in_series)
-    image_number = int(param_or_default(action_config["params"], "image_uniformity_image_number", 6))
+    image_number = param_or_default_as_int( action_config["params"], "image_uniformity_image_number", 6 )
 
     print(
         "  matched with series number: "
