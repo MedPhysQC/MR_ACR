@@ -32,9 +32,10 @@ output: difference between max and min B0 field strength within ROI
 Changelog:
     20240919: initial version 
     20241213 / jkuijer: add support for SiemensServiceStimEcho type
+    20250327 / jkuijer: add support for Philips_B0map type, changed colormap of B0-map image
 """
 
-__version__ = '20241213'
+__version__ = '20250327'
 __author__ = 'jkuijer'
 
 from typing import List
@@ -171,7 +172,8 @@ def B0_uniformity(parsed_input: List[DicomSeriesList], result, action_config) ->
         )
 
 
-    gamma_rad_ms_T = 267513  # 42576 * 2 * pi;  gyromatic frequency in rad/ms * 1/T
+    gamma_rad_ms_T = 267513    # 42576 * 2 * pi;  gyromatic frequency in rad/ms * 1/T
+    gamma_Hz_T     = 42.576e6  # gyromatic frequency in Hz/T
 
     if B0_map.data_type is B0_DataType.B0_PHASE_RAD:
         #dB0_T = image_data_phs_roi / (gamma_rad_ms_T * B0_map.delta_TE)  # in Tesla
@@ -179,10 +181,10 @@ def B0_uniformity(parsed_input: List[DicomSeriesList], result, action_config) ->
         dB0_ppm = image_data_phs_roi * 1.0e6 / ( gamma_rad_ms_T * B0_map.delta_TE * B0_map.field_strength_T )  # in ppm
     
     elif B0_map.data_type is B0_DataType.B0_HZ:
-        raise NotImplementedError("B0_HZ not yet implemented")
+        dB0_ppm = image_data_phs_roi * 1.0e6 / ( gamma_Hz_T * B0_map.field_strength_T )  # in ppm
     
     elif B0_map.data_type is B0_DataType.B0_PPM:
-        raise NotImplementedError("B0_PPM not implemented yet")
+        dB0_ppm = image_data_phs_roi
     else:
         raise ValueError("Unknown data type in Shim analysis")
 
@@ -195,17 +197,24 @@ def B0_uniformity(parsed_input: List[DicomSeriesList], result, action_config) ->
     B0_uniformity_ppm = (largest_p - smallest_p)
 
     print( "  percentile P0.1: {:0.2f}".format(smallest_p) + " P99.9: {:0.2f}".format(largest_p) )
-    print( "  B0 uniformity: {:0.2f}".format(B0_uniformity_ppm) )
+    print( "  B0 uniformity: {:0.2f}".format(B0_uniformity_ppm) + " ppm")
     result.addFloat("B0_uniformity_ppm", B0_uniformity_ppm)
 
+    # B0 image, set background halfway smalles/largest value
+    mean_p = ( smallest_p + largest_p ) / 2.0
+    dB0_ppm1 = dB0_ppm - (mask_roi-1) * mean_p
+
     phase_delta_filename = "unwrapped_phase_map.png"
-    save_image_to_file(dB0_ppm, phase_delta_filename, "B0 uniformity [ppm]")
+    save_image_to_file(dB0_ppm1, phase_delta_filename, "B0 uniformity [ppm]", cmaprange=(smallest_p,largest_p) )
     result.addObject("B0_map", phase_delta_filename)
 
 
-def save_image_to_file(image, name, title):
+def save_image_to_file(image, name, title, cmaprange = None):
     plt.title(title)
-    im = plt.imshow(image, cmap=plt.get_cmap("plasma"))
+    if cmaprange:
+        im = plt.imshow(image, cmap=plt.get_cmap("RdBu_r"), vmin=cmaprange[0], vmax=cmaprange[1])
+    else:
+        im = plt.imshow(image, cmap=plt.get_cmap("RdBu_r"))
     plt.colorbar(im)
 
     plt.axis("off")

@@ -29,9 +29,11 @@ TODO: Implement SiemensServiceStimEcho
 Changelog:
     20240919: initial version 
     20241213 / jkuijer: add support for SiemensServiceStimEcho type
+    20250327 / jkuijer: add support for Philips_B0map type
+
 """
 
-__version__ = '20241213'
+__version__ = '20250327'
 __author__ = 'jkuijer'
 
 from enum import Enum
@@ -138,14 +140,14 @@ def GE_VUMC_custom(series_description, parsed_input, action_config):
 def GE_B0map(series_description, parsed_input, action_config):
     print("  getting B0 series for GE_B0map")
     
-    # GE has one single series that first magnitude images first, then phase images
+    # GE has one single series with magnitude images first, then phase images
     print( "  search for configured SeriesDescription: " + series_description )
 
-    # configuration of images numbers for magnitude and phase images
+    # configuration of image numbers for magnitude and phase images
     # must be single slice B0 map with phase in #1 and magn in #2
     image_number_mag = 2
     image_number_phs = 1
-    print( f"  image numbers magnitude = {image_number_mag}, phase = {image_number_phs}" )
+    print( f"  image number magnitude = {image_number_mag}, phase = {image_number_phs}" )
 
     # find series
     series = series_by_series_description(series_description, parsed_input)
@@ -204,9 +206,96 @@ def GE_B0map(series_description, parsed_input, action_config):
 
 
 def Philips_B0map(series_description, parsed_input, action_config):
-    raise NotImplementedError("Philips_B0map not yet implemented")
-    B0_map = None
-    return B0_map
+    print("  getting B0 series for Philips_B0map")
+    
+    # Philips has one single series with magnitude image first, then B0 image in Hz
+    print( "  search for configured SeriesDescription: " + series_description )
+
+    # configuration of image numbers for magnitude and B0 images
+    # must be single slice B0 map with phase in #1 and magn in #2
+    image_number_mag = 1
+    image_number_B0  = 2
+    print( f"  image numbers magnitude = {image_number_mag}, B0 = {image_number_B0}" )
+
+    # find series
+    series = series_by_series_description(series_description, parsed_input)
+
+    print(
+        "  matched with series number: "
+        + str( series[0]["SeriesNumber"].value )
+        + "\n  study_instance_uid: '"
+        + series[0]["StudyInstanceUID"].value
+        + "'\n  series_instance_uid: '"
+        + series[0]["SeriesInstanceUID"].value
+        + "'"
+    )
+    
+    # check sequence name of Philips B0 map
+    if 'RescaleType' in series[image_number_B0-1]:
+        seq_name = 'Hz'
+        print( "  check if ['RescaleType'] contains \'" + seq_name + "\'" )
+        if str(series[image_number_B0-1]['RescaleType'].value).find(seq_name) != -1:
+            print( "  detected B0 map in Hz for Philips." )
+        else:
+            print( "  could not detect B0 map in Hz for Philips. RescaleType not identical to \'Hz\'" )
+            raise ValueError("Images not recognized as B0 map for Philips.")
+    else:
+        print( "  could not detect B0 map for Philips." )
+        raise ValueError("Images not recognized as B0 map for Philips.")
+        
+    # check number of images in the B0 map series, should have only two
+    if len( series ) > 2:
+        print( "  B0 map for Philips should have only 2 images." )
+        raise ValueError("More than 2 images in Philips B0 map series.")
+        
+
+    # get the pixel data
+    image_data_mag = image_data_from_series(series, image_number = image_number_mag).astype("float32")
+    image_data_B0 = image_data_from_series(series, image_number = image_number_B0).astype("float32")
+
+    # phase1 index = 2, phase2 index=3
+    image_B0 = series[image_number_B0-1]
+
+    # convert pixel values to radians
+    if hasattr(image_B0, "RescaleSlope"):
+        factor = float( image_B0.RescaleSlope )
+        offset = float( image_B0.RescaleIntercept )
+    elif (
+        hasattr(image_B0, "RealWorldValueMappingSequence")
+        and hasattr(image_B0.RealWorldValueMappingSequence, "Item_1")
+        and hasattr(image_B0.RealWorldValueMappingSequence.Item_1, "RealWorldValueSlope")
+        and hasattr(
+            image_B0.RealWorldValueMappingSequence.Item_1,
+            "RealWorldValueIntercept",
+        )
+    ):
+        factor = float(
+            image_B0.RealWorldValueMappingSequence.Item_1.RealWorldValueSlope
+        )
+        offset = float(
+            image_B0.RealWorldValueMappingSequence.Item_1.RealWorldValueIntercept
+        )
+    else:
+        raise AttributeError(
+            "SHIM: RescaleSlope or RescaleIntercept could not be determined. Shim analysis skipped"
+        )
+
+    
+    # convert from phase image from pixel values to radians
+    image_data_B0_hz = image_data_B0 * factor - offset
+
+    # convert from phase image from pixel values to radians
+    #image_data_B0_rad = image_data_B0 * factor - offset
+    
+    field_strength_T = float( series[0].MagneticFieldStrength )
+
+    return B0_Map( 
+        image_data_mag = image_data_mag,
+        image_data_phs = image_data_B0_hz, 
+        data_type = B0_DataType.B0_HZ,
+        delta_TE = None,
+        field_strength_T = field_strength_T
+    )
 
 
 def PhilipsDoubleEcho(series_description, parsed_input, action_config):
@@ -249,10 +338,10 @@ def PhilipsDoubleEcho(series_description, parsed_input, action_config):
 
     # convert pixel values to radians
     if hasattr(series_phs1, "RescaleSlope") and hasattr(series_phs2, "RescaleSlope"):
-        factor1 = series_phs1.RescaleSlope / 1000.0
-        offset1 = series_phs1.RescaleIntercept / 1000.0
-        factor2 = series_phs2.RescaleSlope / 1000.0
-        offset2 = series_phs2.RescaleIntercept / 1000.0
+        factor1 = float( series_phs1.RescaleSlope ) / 1000.0
+        offset1 = float( series_phs1.RescaleIntercept ) / 1000.0
+        factor2 = float( series_phs2.RescaleSlope ) / 1000.0
+        offset2 = float( series_phs2.RescaleIntercept ) / 1000.0
     elif (
         hasattr(series_phs1, "RealWorldValueMappingSequence")
         and hasattr(series_phs1.RealWorldValueMappingSequence, "Item_1")
@@ -269,17 +358,16 @@ def PhilipsDoubleEcho(series_description, parsed_input, action_config):
             "RealWorldValueIntercept",
         )
     ):
-        factor1 = (
-            series_phs1.RealWorldValueMappingSequence.Item_1.RealWorldValueSlope / 1000.0
+        factor1 = float(
+            series_phs1.RealWorldValueMappingSequence.Item_1.RealWorldValueSlope
         )
-        offset1 = (
+        offset1 = float(
             series_phs1.RealWorldValueMappingSequence.Item_1.RealWorldValueIntercept
-            / 1000.0
         )
-        factor2 = (
+        factor2 = float(
             series_phs2.RealWorldValueMappingSequence.Item_1.RealWorldValueSlope / 1000.0
         )
-        offset2 = (
+        offset2 = float(
             series_phs2.RealWorldValueMappingSequence.Item_1.RealWorldValueIntercept
             / 1000.0
         )
