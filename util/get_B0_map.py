@@ -30,10 +30,10 @@ Changelog:
     20240919: initial version 
     20241213 / jkuijer: add support for SiemensServiceStimEcho type
     20250327 / jkuijer: add support for Philips_B0map type
-
+    20250407 / jkuijer: fix DICOM intercept sign.
 """
 
-__version__ = '20250327'
+__version__ = '20250407'
 __author__ = 'jkuijer'
 
 from enum import Enum
@@ -282,11 +282,8 @@ def Philips_B0map(series_description, parsed_input, action_config):
 
     
     # convert from phase image from pixel values to radians
-    image_data_B0_hz = image_data_B0 * factor - offset
+    image_data_B0_hz = image_data_B0 * factor + offset
 
-    # convert from phase image from pixel values to radians
-    #image_data_B0_rad = image_data_B0 * factor - offset
-    
     field_strength_T = float( series[0].MagneticFieldStrength )
 
     return B0_Map( 
@@ -381,8 +378,8 @@ def PhilipsDoubleEcho(series_description, parsed_input, action_config):
     image_data_phs2 = image_data_from_series(series, image_number = 4).astype("float32")
     
     # convert from phase image from pixel values to radians
-    image_data_phs1_rad = image_data_phs1 * factor1 - offset1
-    image_data_phs2_rad = image_data_phs2 * factor2 - offset2
+    image_data_phs1_rad = image_data_phs1 * factor1 + offset1
+    image_data_phs2_rad = image_data_phs2 * factor2 + offset2
 
     delta_phase_rad = image_data_phs2_rad - image_data_phs1_rad
     delta_TE = series_phs2.EchoTime - series_phs1.EchoTime
