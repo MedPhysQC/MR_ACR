@@ -70,7 +70,8 @@
     "geometry_z": {
       "filters": {},
       "params": {
-        "geometry_z_series_description": "ACR SAG DIS2D"
+        "geometry_z_series_description": "ACR SAG DIS2D",
+        "geometry_z_image_number": ""
       }
     },
     "B0_uniformity": {
@@ -159,7 +160,8 @@
     },
     "geometry_z": {
       "params": {
-        "geometry_z_series_description": "REQUIRED. The series description that identifies the correct acquisition for determining phantom geometry over z axis."
+        "geometry_z_series_description": "REQUIRED. The series description that identifies the correct acquisition for determining phantom geometry over z axis.",
+        "geometry_z_image_number": "The number of the image to analyse."
       }
     },
     "B0_uniformity": {
