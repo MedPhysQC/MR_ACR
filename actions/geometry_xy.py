@@ -28,6 +28,7 @@ output: diameter of phantom along X- and Y-directions
 Changelog:
     20240919: initial version 
     20250401 / jkuijer: more robust config param reading
+    20250514 / jkuijer: bugfix - correct centre coordinate ouput with upsampling
 """
 
 __version__ = '20250401'
@@ -118,7 +119,7 @@ def geometry_xy(
 
     print(
         "  detected phantom centre coordinates: "
-        + "{:.0f}".format(x_center_px) + " " + "{:.0f}".format(y_center_px)
+        + "{:.0f}".format(x_center_px/upsampling_factor) + " " + "{:.0f}".format(y_center_px/upsampling_factor)
         + "\n  fitted ellipse: "
         + "diam X = {:.4f}".format(x_diameter_mm) + " Y = {:.4f}".format(y_diameter_mm) + " mm, "
         + "angle = {:.4f}".format(np.degrees(phi)) + " deg"
