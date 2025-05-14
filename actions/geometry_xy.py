@@ -31,7 +31,7 @@ Changelog:
     20250514 / jkuijer: bugfix - correct centre coordinate ouput with upsampling
 """
 
-__version__ = '20250401'
+__version__ = '20250514'
 __author__ = 'jkuijer'
 
 from typing import List
