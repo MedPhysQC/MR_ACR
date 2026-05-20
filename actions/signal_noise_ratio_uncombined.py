@@ -28,20 +28,22 @@ output: SNR, with noise estimated from background ROIs.
   b. edge detection and ellipse fit
 2. Define ROIs for
   a. signal: centre of phantom
-  b. noise: background signal in corners of image
+  b. noise: background signal in corners of image OR noise image if available in second temporal position (Philips)
 3. Output is the ghosting in percent as defined in the ACR guide:
-   0.655 * (signal_phantom / StdDev_background)
+   0.655 * (signal_phantom / StdDev_background) OR (signal_phantom / StdDev_noise_image)
 
 Changelog:
     20240919: initial version
     20250326: - first stage of support for Philips uncombined images (series with additional no-RF noise-only images)
-              - TODO: use no-RF images for noise measurement
+              - (implemented 20260519 for Philips): use no-RF images for noise measurement
     20250401 / jkuijer:
               - more robust config param reading
               - support reading of MRIdian coil names from DICOM header
+    20260519 / jkuijer:
+              - support for Philips separate noise images in second temporal position
 """
 
-__version__ = '20250401'
+__version__ = '20260519'
 __author__ = 'jkuijer'
 
 from typing import List
@@ -158,32 +160,44 @@ def signal_noise_ratio_uncombined(parsed_input: List[DicomSeriesList], result, a
 
     # if no image was configured: loop over all images in series
     image_data_uc = []
+    noise_data_uc = []
     if image_number is None:
         image_number = range( 1, len(series)+1 )
     for i in image_number:
-        image_data_uc.append( image_data_from_series( series, i ) )
-        # GE needs coil names list in config
-        # if coil names are not configured: try to read coil name from DICOM tag
-        # Siemens
-        if ( not coil_names_configured ) and [0x0021,0x114f] in series[i-1]:
-            coil_names.append( series[i-1][0x0021,0x114f].value )
-        # ViewRay MRIdian
-        elif ( not coil_names_configured ) and [0x0051,0x100f] in series[i-1]:
-            coil_names.append( series[i-1][0x0051,0x100f].value )
+        # Philips stores noise image in second "TemporalPosition",
+        # for uncombined series with signal images and separate noise images: 
+        # - ["TemporalPositionIdentifier"] == '1' for signal image and == '2' for noise image
+        temporal_position = series[i-1].get("TemporalPositionIdentifier", '1')
+        if temporal_position == '2':
+            print( "  read noise image (Philips)" )
+            noise_data_uc.append( image_data_from_series( series, i ) )
+            # no need to store coil name for noise image
         else:
-            # Philips
-            # for uncombined series with signal images and separate noise images: 
-            # - ["TemporalPositionIdentifier"] == '1' for signal image and == '2' for noise image
-            # - for now just calculate SNR from background noise (ignore noise images)
-            # - TODO: calc SNR using the noise images
-            if (
-                ( not coil_names_configured )
-                and "TemporalPositionIdentifier" in series[i-1]
-                # ignore noise image with ["TemporalPositionIdentifier"].value == '2'
-                and series[i-1]["TemporalPositionIdentifier"].value == '1'
-                and [0x2001,0x1002] in series[i-1]
-            ):
-                coil_names.append( series[i-1][0x2001,0x1002].value )
+            print( "  read signal image" )
+            image_data_uc.append( image_data_from_series( series, i ) )
+            
+            # GE needs coil names list in config
+            # if coil names are not configured: try to read coil name from DICOM tag
+            # Siemens
+            if ( not coil_names_configured ) and [0x0021,0x114f] in series[i-1]:
+                coil_names.append( series[i-1][0x0021,0x114f].value )
+                print( "  Siemens coil name: " + str(coil_names[-1]) )
+            # ViewRay MRIdian
+            elif ( not coil_names_configured ) and [0x0051,0x100f] in series[i-1]:
+                coil_names.append( series[i-1][0x0051,0x100f].value )
+                print( "  MRIdian coil name: " + str(coil_names[-1]) )
+            else:
+                # Philips
+                # for uncombined series with signal images and separate noise images: 
+                # - ["TemporalPositionIdentifier"] == '1' for signal image and == '2' for noise image
+                # - for now just calculate SNR from background noise (ignore noise images)
+                # - TODO: calc SNR using the noise images
+                if (
+                    ( not coil_names_configured )
+                    and [0x2001,0x1002] in series[i-1]
+                ):
+                    coil_names.append( series[i-1][0x2001,0x1002].value )
+                    print( "  Philips coil name: " + str(coil_names[-1]) )
 
     comb_image_data = np.sqrt( sum( np.square( [ i.astype('float') for i in image_data_uc ] ) ) ).astype('uint16')
     
@@ -197,30 +211,60 @@ def signal_noise_ratio_uncombined(parsed_input: List[DicomSeriesList], result, a
     # retrieve pixel spacing to get the pixel values from the correct positions
     pixel_spacing = get_pixel_spacing(series)
 
-    for ( image_data, coil_name ) in zip(image_data_uc, coil_names):
-        # determine mean pixel value of center roi
-        center_roi_pixel_values = get_pixel_values_circle(
-            image_data, center_x, center_y, signal_roi_diameter_mm, pixel_spacing
-        )
-        center_roi_mean = center_roi_pixel_values.mean()
+    # Separately calculate SNR for each coil element (image) in the uncombined series
+    # make a switch to use noise images for noise estimation when these are available,
+    # otherwise use background ROIs as in the combined version
+    if len(noise_data_uc) > 0:
+        print( "  calculate SNR using noise images" )
+        for ( image_data, noise_data, coil_name ) in zip(image_data_uc, noise_data_uc, coil_names):
+            # determine mean pixel value of center roi
+            center_roi_pixel_values = get_pixel_values_circle(
+                image_data, center_x, center_y, signal_roi_diameter_mm, pixel_spacing
+            )
+            center_roi_mean = center_roi_pixel_values.mean()
+            
+            # determine standard deviation from noise image
+            center_roi_pixel_values = get_pixel_values_circle(
+                noise_data, center_x, center_y, signal_roi_diameter_mm, pixel_spacing
+            )
+            noise_roi_std = np.std(center_roi_pixel_values)
         
-        # determine standard deviation of background rois
-        background_rois_values, background_rois = get_background_rois_pixel_values(
-            image_data,
-            center_x,
-            center_y,
-            sides_mm=noise_roi_sides_mm,
-            shift_mm=background_roi_shift_mm,
-            pixel_spacing=pixel_spacing,
-        )
-        background_roi_std = np.std(background_rois_values)
-    
-        # determine SNR
-        signal_to_noise_ratio = 0.0
-        if background_roi_std > 0.0001:
-            signal_to_noise_ratio = 0.655 * (center_roi_mean / background_roi_std)
-    
-        print(
-            "  SNR_Coil_" + str(coil_name), "{:.2f}".format(signal_to_noise_ratio)
-        )
-        result.addFloat( "SNR_Coil_" + str(coil_name), "{:.2f}".format(signal_to_noise_ratio) )
+            # determine SNR
+            signal_to_noise_ratio = 0.0
+            if noise_roi_std > 0.0001:
+                signal_to_noise_ratio = center_roi_mean / noise_roi_std
+        
+            print(
+                "  SNR_Coil_" + str(coil_name), "{:.2f}".format(signal_to_noise_ratio)
+            )
+            result.addFloat( "SNR_Coil_" + str(coil_name), "{:.2f}".format(signal_to_noise_ratio) )
+        
+    else:
+        print( "  calculate SNR using background ROIs" )
+        for ( image_data, coil_name ) in zip(image_data_uc, coil_names):
+            # determine mean pixel value of center roi
+            center_roi_pixel_values = get_pixel_values_circle(
+                image_data, center_x, center_y, signal_roi_diameter_mm, pixel_spacing
+            )
+            center_roi_mean = center_roi_pixel_values.mean()
+            
+            # determine standard deviation of background rois
+            background_rois_values, background_rois = get_background_rois_pixel_values(
+                image_data,
+                center_x,
+                center_y,
+                sides_mm=noise_roi_sides_mm,
+                shift_mm=background_roi_shift_mm,
+                pixel_spacing=pixel_spacing,
+            )
+            background_roi_std = np.std(background_rois_values)
+        
+            # determine SNR
+            signal_to_noise_ratio = 0.0
+            if background_roi_std > 0.0001:
+                signal_to_noise_ratio = 0.655 * (center_roi_mean / background_roi_std)
+        
+            print(
+                "  SNR_Coil_" + str(coil_name), "{:.2f}".format(signal_to_noise_ratio)
+            )
+            result.addFloat( "SNR_Coil_" + str(coil_name), "{:.2f}".format(signal_to_noise_ratio) )

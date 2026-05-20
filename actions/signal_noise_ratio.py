@@ -27,16 +27,18 @@ output: SNR, with noise estimated from background ROIs.
 1. Estimation of phantom centre and edge (see geometry_xy.py)
 2. Define ROIs for
   a. signal: centre of phantom
-  b. noise: background signal in corners of image
+  b. noise: background signal in corners of image OR noise image if available in second temporal position (Philips)
 3. Output is the ghosting in percent as defined in the ACR guide:
-   0.655 * (signal_phantom / StdDev_background)
+   0.655 * (signal_phantom / StdDev_background) OR (signal_phantom / StdDev_noise_image)
 
 Changelog:
     20240919: initial version 
     20250401 / jkuijer: more robust config param reading
+    20260519 / jkuijer: support for Philips separate noise images in second temporal position
+
 """
 
-__version__ = '20250401'
+__version__ = '20260519'
 __author__ = 'jkuijer'
 
 from typing import List
@@ -119,6 +121,17 @@ def signal_noise_ratio(parsed_input: List[DicomSeriesList], result, action_confi
 
     image_data = image_data_from_series( series, image_number )
 
+    # Philips stores noise image in second "TemporalPositions",
+    # check if this is the case and if so, use the second image in the series for noise estimation
+    temporal_positions = series[0].get("NumberOfTemporalPositions", None)
+    if temporal_positions == '2':
+        print( "  found two TemporalPositions, using second image for noise estimation" )
+        noise_data = image_data_from_series( series, image_number+1 )
+    else:
+        print( "  found one TemporalPositions, using background ROIs for noise estimation" )
+        noise_data = None
+
+
     # determine center coordinates of phantom
     [center_x, center_y] = retrieve_ellipse_center(
         image_data
@@ -137,21 +150,35 @@ def signal_noise_ratio(parsed_input: List[DicomSeriesList], result, action_confi
     )
     center_roi_mean = center_roi_pixel_values.mean()
 
-    # determine standard deviation of background rois
-    background_rois_values, background_rois = get_background_rois_pixel_values(
-        image_data,
-        center_x,
-        center_y,
-        sides_mm=noise_roi_sides_mm,
-        shift_mm=background_roi_shift_mm,
-        pixel_spacing=pixel_spacing,
-    )
-    background_roi_std = np.std(background_rois_values)
+    if noise_data is not None:
+        # determine standard deviation from noise image
+        center_roi_pixel_values = get_pixel_values_circle(
+            noise_data, center_x, center_y, signal_roi_diameter_mm, pixel_spacing
+        )
+        noise_roi_std = np.std(center_roi_pixel_values)        
 
-    # determine SNR
-    signal_to_noise_ratio = 0.0
-    if background_roi_std > 0.0001:
-        signal_to_noise_ratio = 0.655 * (center_roi_mean / background_roi_std)
+        # determine SNR
+        signal_to_noise_ratio = 0.0
+        if noise_roi_std > 0.0001:
+            signal_to_noise_ratio = center_roi_mean / noise_roi_std
+
+    else:
+        # determine standard deviation from background rois
+        background_rois_values, background_rois = get_background_rois_pixel_values(
+            image_data,
+            center_x,
+            center_y,
+            sides_mm=noise_roi_sides_mm,
+            shift_mm=background_roi_shift_mm,
+            pixel_spacing=pixel_spacing,
+        )
+        background_roi_std = np.std(background_rois_values)
+
+        # determine SNR
+        signal_to_noise_ratio = 0.0
+        if background_roi_std > 0.0001:
+            signal_to_noise_ratio = 0.655 * (center_roi_mean / background_roi_std)
+    
     print("  SNR = {:.0f}".format(signal_to_noise_ratio))
 
     # save result objects to directory relative to working directory
