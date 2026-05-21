@@ -152,10 +152,12 @@ def signal_noise_ratio(parsed_input: List[DicomSeriesList], result, action_confi
 
     if noise_data is not None:
         # determine standard deviation from noise image
-        center_roi_pixel_values = get_pixel_values_circle(
+        center_roi_noise_values = get_pixel_values_circle(
             noise_data, center_x, center_y, signal_roi_diameter_mm, pixel_spacing
         )
-        noise_roi_std = np.std(center_roi_pixel_values)        
+        noise_roi_std = np.std(center_roi_noise_values)
+        # set noise rois to empty for plotting
+        background_rois = []
 
         # determine SNR
         signal_to_noise_ratio = 0.0
