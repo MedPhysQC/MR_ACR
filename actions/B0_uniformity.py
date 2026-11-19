@@ -33,9 +33,10 @@ Changelog:
     20240919: initial version 
     20241213 / jkuijer: add support for SiemensServiceStimEcho type
     20250327 / jkuijer: add support for Philips_B0map type, changed colormap of B0-map image
+    20261119 / jkuijer: add region to ignore in bottom part of phantom for B0 map, to exclude feature in Pro-MRI ACR phantom
 """
 
-__version__ = '20250327'
+__version__ = '20261119'
 __author__ = 'jkuijer'
 
 from typing import List
@@ -48,6 +49,7 @@ import skimage.restoration
 
 from util import (
     DicomSeriesList,
+    param_or_default_as_int,
     retrieve_ellipse_parameters,
     elliptical_mask,
 )
@@ -93,15 +95,25 @@ def B0_uniformity(parsed_input: List[DicomSeriesList], result, action_config) ->
     Expects a phase and a magnitude image
     The magnitude image is used to determine the center position and phantom radius.
     This is used to create a mask with a radius of 95% of the phantom,
-    leaving out the upper 20% as well to account for the air bubble in the top of the phantom
+    leaving out the upper X% as well to account for the air bubble in the top of the phantom.
+    Optionally a percentage of the bottom of the ROI is left out as well, configured by
+    B0_uniformity_bottom_margin_percent (default 0, use 50 to keep only the upper half).
     """
+    
+    default_bottom_margin_percent = 0
+
     actionName = "B0_uniformity"
     print( "> action " + actionName )
     series_description = action_config["params"]["B0_uniformity_series_description"]
     B0_map_type = action_config["params"]["B0_uniformity_B0_map_type"]
     roi_radius_percent = float(action_config["params"]["B0_uniformity_relative_roi_size_percent"])
     top_margin_percent = int(action_config["params"]["B0_uniformity_top_margin_percent"])
-
+    # optional: cut a fraction off the bottom of the ROI as well
+    bottom_margin_percent = param_or_default_as_int(
+        action_config["params"],
+        "B0_uniformity_bottom_margin_percent",
+        default_bottom_margin_percent
+    )
 
     if B0_map_type in available_B0_map_types:
         try:
@@ -153,6 +165,7 @@ def B0_uniformity(parsed_input: List[DicomSeriesList], result, action_config) ->
         dimension_x=B0_map.image_data[0].shape[0],
         dimension_y=B0_map.image_data[0].shape[1],
         ignore_top=top_margin_percent / 100,
+        ignore_bottom=bottom_margin_percent / 100,
     )
 
 

@@ -19,6 +19,7 @@ Changelog:
     20241213 / jkuijer: bug fix in interpolation_peak_offset()
         error for interpolation at edge of image
     20250401 / jkuijer: more debug info on config param reading and added param_or_default_as_float
+    20261119 / jkuijer: add region to ignore in bottom part of phantom for B0 map, to exclude feature in Pro-MRI ACR phantom
 """
 
 
@@ -857,6 +858,7 @@ def elliptical_mask(
     dimension_y: int,
     angle: Union[float, int] = 0,
     ignore_top: float = None,
+    ignore_bottom: float = None,
 ) -> np.ndarray:
     """
     Create a mask based on an ellipse.
@@ -868,7 +870,8 @@ def elliptical_mask(
     :param angle: angle of rotation for the bounding box of the ellipse
     :param dimension_x: x axis size of the mask
     :param dimension_y: y axis size of the mask
-    :param ignore_top: cut of a percentage of the top of the ellipse
+    :param ignore_top: cut off a percentage of the top of the ellipse
+    :param ignore_bottom: cut off a percentage of the bottom of the ellipse
     :return:
     """
 
@@ -876,21 +879,21 @@ def elliptical_mask(
     rr, cc = ellipse(
         center_x, center_y, radius_x, radius_y, shape=mask.shape, rotation=angle
     )
-    if ignore_top:
-        # note: y-axis reversed
+    if ignore_top or ignore_bottom:
+        # note: y-axis reversed, so row index rr.min() is the TOP of the
+        # displayed image and rr.max() the BOTTOM.
+        # Both cuts are measured as a fraction of the full ellipse height and
+        # are applied against the original extent, so that top and bottom
+        # margins can be combined without one shifting the other.
         rr_size = rr.max() - rr.min()
-        new_rr_size = int(rr_size * ignore_top)
-        #new_rr_max = rr.max() - new_rr_size
-        #rr[rr < new_rr_max] = -1
-        new_rr_min = rr.min() + new_rr_size
-        rr[rr < new_rr_min] = -1
-        new_rr, new_cc = [], []
-        # strip the -1s, as rr,cc are indicies for coordinates, a value indicates a value at said coordinate
-        for idx, val in enumerate(rr):
-            if val >= 0:
-                new_rr.append(val)
-                new_cc.append(cc[idx])
-        rr, cc = np.array(new_rr), np.array(new_cc)
+        keep = np.full(rr.shape, True)
+        if ignore_top:
+            new_rr_min = rr.min() + int(rr_size * ignore_top)
+            keep &= rr >= new_rr_min
+        if ignore_bottom:
+            new_rr_max = rr.max() - int(rr_size * ignore_bottom)
+            keep &= rr <= new_rr_max
+        rr, cc = rr[keep], cc[keep]
     mask[rr, cc] = True
 
     return mask

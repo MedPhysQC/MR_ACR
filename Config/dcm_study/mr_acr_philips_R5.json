@@ -80,7 +80,8 @@
         "B0_uniformity_series_description": "ACR B0 map",
         "B0_uniformity_B0_map_type": "Philips_B0map",
         "B0_uniformity_relative_roi_size_percent": "90",
-        "B0_uniformity_top_margin_percent": "10"
+        "B0_uniformity_top_margin_percent": "10",
+        "B0_uniformity_bottom_margin_percent": "0"
       }
     }
   },
@@ -162,7 +163,8 @@
         "B0_uniformity_series_description": "REQUIRED. The series description that identifies the acquisition for determining B0 homogeneity.",
         "B0_uniformity_B0_map_type": "REQUIRED. Type of B0 scan. Valid entries are GE_VUMC_custom, GE_B0map, Philips_B0map, PhilipsDoubleEcho, SiemensPhaseDifference, SiemensServiceStimEcho",
         "B0_uniformity_relative_roi_size_percent": "REQUIRED. Percentage of the phantom size used for min/max of B0 map.",
-        "B0_uniformity_top_margin_percent": "REQUIRED. Percentage of the ROI diameter removed from the top to account for the air bubble in the phantom."
+        "B0_uniformity_top_margin_percent": "REQUIRED. Percentage of the ROI diameter removed from the top to account for the air bubble in the phantom.",
+        "B0_uniformity_bottom_margin_percent": "Percentage of the ROI diameter removed from the top to account for the air bubble in the phantom."
       }
     },
     "rf_transmitter_amplitude": {
