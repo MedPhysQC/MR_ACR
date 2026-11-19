@@ -85,10 +85,6 @@ available_actions = {
     'geometry_z': geometry_z,
     'B0_uniformity': B0_uniformity
 }
-available_actions = {
-    'acqdatetime': acqdatetime,
-    'geometry_z': geometry_z,
-}
 
 if __name__ == "__main__":
     data, results, config = wad_input()
