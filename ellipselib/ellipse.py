@@ -198,7 +198,8 @@ class MyEllipseModel(BaseModel):
 
         # angle of counterclockwise rotation of major-axis of ellipse
         # to x-axis [eqn. 23] from [2].
-        phi = 0.5 * np.arctan((2.0 * b) / (a - c))
+        # AmsUMC - JK - added .real to avoid complex numbers
+        phi = ( 0.5 * np.arctan((2.0 * b) / (a - c)) ).real
         if a > c:
             phi += 0.5 * np.pi
 
