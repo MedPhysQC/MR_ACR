@@ -33,9 +33,11 @@ Changelog:
     20240919: initial version
     20241213 / jkuijer: more selective peakfinding in sinogram to find low-intensity edge
     20250401 / jkuijer: more robust config param reading
+    20261119 / jkuijer: make noise floor removal percentile configurable
+                        make peak finding threshold to avoid issues with low-intensity edge detection in sinogram configurable
 """
 
-__version__ = '20250401'
+__version__ = '20261119'
 __author__ = 'jkuijer'
 
 from typing import List
@@ -45,6 +47,7 @@ from scipy import ndimage
 
 from util import (
     param_or_default_as_int,
+    param_or_default_as_float,
     DicomSeriesList,
     plot_edges_on_image,
     interpolation_peak_offset,
@@ -58,6 +61,10 @@ from util import (
 def geometry_z(
     parsed_input: List[DicomSeriesList], result, action_config
 ) -> List[float]:
+
+    default_peak_finding_threshold = 0.9
+    default_noise_floor_percentile = 20
+    
     # Z diameter
     actionName = "geometry_z"
     print( "> action " + actionName )
@@ -86,6 +93,18 @@ def geometry_z(
 
     image_data_z = image_data_from_series(series_z, image_number = image_number_z).astype("float")
 
+    # get parameters for peak finding and noise floor removal
+    peak_finding_threshold = param_or_default_as_float(
+        action_config["params"],
+        "geometry_z_peak_finding_threshold",
+        default_peak_finding_threshold
+    )
+
+    noise_floor_percentile = param_or_default_as_float(
+        action_config["params"],
+        "geometry_z_noise_floor_percentile",
+        default_noise_floor_percentile
+    )
 
     # Get pixel spacing
     pixel_spacing = get_pixel_spacing(series_z)
@@ -94,8 +113,8 @@ def geometry_z(
     image_filtered = image_data_z.copy()
 
     # filter low signals out of the image to avoid false peak detection in sinogram
-    noise_floor_threshold = np.percentile(image_data_z, 20)
-    print("  apply noise floor threshold of percentile 20 : {:.0f}".format(noise_floor_threshold) )
+    noise_floor_threshold = np.percentile(image_data_z, noise_floor_percentile)
+    print("  apply noise floor threshold of percentile {}: {:.0f}".format(noise_floor_percentile, noise_floor_threshold) )
     image_filtered[image_filtered < noise_floor_threshold] = 0
 
     
@@ -161,26 +180,25 @@ def geometry_z(
     ]  # this returns the final column (highest value per row) of the sorted rows of the sinogram
 
     # peak finder
-    # find the column index for the first peak over 90% of the max value
+    # find the column index for the first peak over a percentage (default 90%) of the max value
     # this works well as we expect two high peaks in the data that are close to each other in value
     # a peak is where the following value is lower than the current
-    threshold = 0.9 #0.60
-    print("  threshold for peak finding in sinogram (relative to max): {:.2f}".format(threshold) )
+    print("  threshold for peak finding in sinogram (relative to max): {:.2f}".format(peak_finding_threshold) )
 
     peak_first = [
         (index, value)
         for index, value in enumerate(sino_max_per_row[:-1])
         if sino_max_per_row[index + 1] < value
-        if value > np.max(sino_max_per_row[:phantom_center_approximate_xy[1]]) * threshold
+        if value > np.max(sino_max_per_row[:phantom_center_approximate_xy[1]]) * peak_finding_threshold
     ][0]
 
-    # find the column index for the last peak over 90% of the max value
+    # find the column index for the last peak over a percentage (default 90%) of the max value
     # same as previous, but in reverse order
     peak_last = [
         (len(sino_max_per_row) - index - 1, value)
         for index, value in enumerate(np.flip(sino_max_per_row)[:-1])
         if np.flip(sino_max_per_row)[index + 1] < value
-        if value > np.max(sino_max_per_row[phantom_center_approximate_xy[1]:]) * threshold
+        if value > np.max(sino_max_per_row[phantom_center_approximate_xy[1]:]) * peak_finding_threshold
     ][0]
 
     # take the peak values to match with the sinogram

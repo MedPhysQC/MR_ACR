@@ -71,7 +71,9 @@
       "filters": {},
       "params": {
         "geometry_z_series_description": "ACR SAG DIS2D",
-        "geometry_z_image_number": ""
+        "geometry_z_image_number": "",
+        "geometry_z_peak_finding_threshold": "0.9",
+        "geometry_z_noise_floor_percentile": "20"
       }
     },
     "B0_uniformity": {
@@ -96,7 +98,7 @@
   "comments": {
     "author": "Guido Millenaar - NKI-AvL, Joost Kuijer - Amsterdam UMC",
     "description": "WADQC 2 module for use with ACR MR phantom acquisitions",
-    "version": "20240808"
+    "version": "20261119"
   },
   "info": {
     "acqdatetime": {
@@ -162,7 +164,9 @@
     "geometry_z": {
       "params": {
         "geometry_z_series_description": "REQUIRED. The series description that identifies the correct acquisition for determining phantom geometry over z axis.",
-        "geometry_z_image_number": "The number of the image to analyse."
+        "geometry_z_image_number": "The number of the image to analyse.",
+        "geometry_z_peak_finding_threshold": "Fractional threshold for peak finding in sinogram. Default 0.9, try lower for low-intensity images",
+        "geometry_z_noise_floor_percentile": "Set noise floor as percentile to set threshold for noise removal in background. Default: 20"
       }
     },
     "B0_uniformity": {
