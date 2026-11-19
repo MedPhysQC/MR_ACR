@@ -20,6 +20,7 @@ Changelog:
         error for interpolation at edge of image
     20250401 / jkuijer: more debug info on config param reading and added param_or_default_as_float
     20261119 / jkuijer: add region to ignore in bottom part of phantom for B0 map, to exclude feature in Pro-MRI ACR phantom
+    20261119 / jkuijer: fix ambiguity in return type hints for get_ghosting_rois_pixel_values and get_background_rois_pixel_values
 """
 
 
@@ -586,7 +587,7 @@ def get_ghosting_rois_pixel_values(
     long_side_mm: Union[float, int],
     shift_mm: Union[float, int],
     pixel_spacing: float,
-) -> (dict, List):
+) -> (tuple[dict, List]):
     """
     Retrieve the pixel values for 4 ghosting rois top, left, bottom and right of phantom roi
     :param image_data: np.array containing pixel values
@@ -673,7 +674,7 @@ def get_background_rois_pixel_values(
     sides_mm: Union[float, int],
     shift_mm: Union[float, int],
     pixel_spacing: float,
-) -> (np.ndarray, List):
+) -> (tuple[np.ndarray, List]):
     """
     Retrieve the pixel values for 4 background rois in every corner of the image
     :param image_data: np.array containing pixel values
